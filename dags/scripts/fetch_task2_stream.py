@@ -49,6 +49,7 @@ def fetch_task2_orders():
         # Path output parquet
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+        # output_dir = "/opt/airflow/data_lake/task2"
         output_dir = "data_lake/task2"
 
         os.makedirs(output_dir, exist_ok=True)
