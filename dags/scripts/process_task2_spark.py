@@ -12,8 +12,8 @@ def run_spark_analytics():
 
     print("Membaca seluruh aliran data dari Data Lake...")
     # Spark dengan mudah membaca SEMUA file parquet di folder ini sekaligus
-    # df_raw = spark.read.parquet("file:///opt/airflow/data_lake/task2/")
-    df_raw = spark.read.parquet("data_lake/task2/")
+    df_raw = spark.read.parquet("file:///opt/airflow/data_lake/task2/")
+    # df_raw = spark.read.parquet("data_lake/task2/")
     df_raw.cache()
 
     print("Menghitung analytics produk & reorder rate...")
@@ -166,8 +166,8 @@ def run_spark_analytics():
     
     # Menghapus file .parquet yang sudah diproses agar tidak menumpuk
     print("Membersihkan file Parquet lama dari Data Lake...")
-    # files = glob.glob('/opt/airflow/data_lake/task2/*.parquet')
-    files = glob.glob('data_lake/task2/*.parquet')
+    files = glob.glob('/opt/airflow/data_lake/task2/*.parquet')
+    # files = glob.glob('data_lake/task2/*.parquet')
     for f in files:
         try:
             os.remove(f)
