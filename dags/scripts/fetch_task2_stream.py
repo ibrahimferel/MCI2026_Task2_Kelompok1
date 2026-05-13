@@ -18,11 +18,8 @@ def fetch_task2_orders():
 
         parsed_data = []
 
-        # Flatten nested JSON
         for order in orders:
-
             for product in order.get("products", []):
-
                 parsed_data.append({
                     "order_id": order.get("order_id"),
                     "user_id": order.get("user_id"),
@@ -36,7 +33,9 @@ def fetch_task2_orders():
                     "department": product.get("department"),
                     "aisle": product.get("aisle"),
                     "add_to_cart_order": product.get("add_to_cart_order"),
-                    "reordered": product.get("reordered")
+                    "reordered": product.get("reordered"),
+                    
+                    "ingestion_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 })
 
         # Convert ke DataFrame
