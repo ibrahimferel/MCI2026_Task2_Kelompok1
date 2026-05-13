@@ -9,3 +9,4 @@ __pycache__/
 
 # Jika Anda nantinya menggunakan file environment untuk password
 .env
+.venv/
