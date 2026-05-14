@@ -1,3 +1,4 @@
+import pandas as pd
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from clickhouse_driver import Client
@@ -136,6 +137,9 @@ def run_spark_analytics():
         "reordered",
         "ingestion_timestamp"
     ).toPandas()
+
+    raw_data = raw_data.where(pd.notnull(raw_data), None)
+    
     raw_data_tuples = [tuple(x) for x in raw_data.to_numpy()]
     if raw_data_tuples:
         client.execute('INSERT INTO analytics.raw_orders VALUES', raw_data_tuples)
