@@ -57,7 +57,7 @@
 
 Pipeline ini mengikuti arsitektur **ELT (Extract -> Load -> Transform)** berbasis Big Data dengan orkestrasi penuh menggunakan Apache Airflow.
 
-![alt text](asset_documentation/image.png)
+![alt text](image.png)
 
 ### Flow Summary
 
@@ -74,44 +74,193 @@ Pipeline ini mengikuti arsitektur **ELT (Extract -> Load -> Transform)** berbasi
 
 Script `fetch_task2.py` bertugas mengambil data order dari sumber (Instacart-style dataset) dan menyimpannya ke Data Lake dalam format **Parquet**.
 
-### Cara Kerja
+### Workflow
 
-```python
-# Fetch data dari API / dataset source
-response = requests.get(API_ENDPOINT, headers=headers)
-df = pd.DataFrame(response.json())
-
-# Simpan ke Data Lake sebagai Parquet
-df.to_parquet(
-    f"/opt/airflow/data_lake/task2/{timestamp}.parquet",
-    index=False
-)
+```text
+Orders API
+    ↓
+HTTP Request (GET)
+    ↓
+JSON Response
+    ↓
+Nested Data Parsing
+    ↓
+Feature Extraction
+    ↓
+Flattening Orders + Products
+    ↓
+Add Ingestion Timestamp
+    ↓
+Save as Parquet
 ```
 
-### Kenapa Parquet?
+### Langkah Kerja
 
-| Format | Size | Query Speed | Schema |
-|--------|------|-------------|--------|
-| CSV | ❌ Besar | ❌ Lambat | ❌ Tidak ada |
-| JSON | ❌ Besar | ❌ Lambat | ❌ Tidak ada |
-| **Parquet** | ✅ Kecil (columnar) | ✅ Cepat | ✅ Typed schema |
+1. **Mengambil data dari Orders API**
+
+   Script melakukan HTTP GET request ke endpoint:
+
+   ```text
+   http://96.9.212.102:8000/orders
+   ```
+
+   untuk memperoleh dataset transaksi pesanan.
+
+2. **Parsing JSON Response**
+
+   Response API dikonversi menjadi Python dictionary menggunakan:
+
+   ```python
+   response.json()
+   ```
+
+   Dataset memiliki struktur **nested JSON**, di mana setiap order menyimpan metadata transaksi dan daftar produk di dalam key `products`.
+
+   Contoh struktur data:
+
+   ```json
+   {
+     "order_id": 1,
+     "user_id": 5,
+     "products": [
+       {
+         "product_id": 10,
+         "product_name": "Banana"
+       }
+     ]
+   }
+   ```
+
+3. **Feature Extraction dari Nested JSON**
+
+   Karena dataset bersifat nested, pipeline melakukan ekstraksi fitur dari dua level data:
+
+   **A. Order-level features**
+
+   Metadata utama transaksi yang diambil dari objek order:
+
+   - `order_id`
+   - `user_id`
+   - `order_number`
+   - `order_dow`
+   - `order_hour_of_day`
+   - `days_since_prior_order`
+
+   **B. Product-level features**
+
+   Informasi produk yang diambil dari list `products`:
+
+   - `product_id`
+   - `product_name`
+   - `department`
+   - `aisle`
+   - `add_to_cart_order`
+   - `reordered`
+
+4. **Flatten Nested Structure**
+
+   Karena satu order dapat memiliki banyak produk, dataset diubah dari bentuk nested menjadi bentuk tabular.
+
+   Contoh:
+
+   Sebelum flattening:
+
+   ```text
+   Order 1
+    └── Products:
+         ├── Banana
+         ├── Milk
+         └── Bread
+   ```
+
+   Setelah flattening:
+
+   | order_id | product_name |
+   |----------|---------------|
+   | 1 | Banana |
+   | 1 | Milk |
+   | 1 | Bread |
+
+   Proses ini mempermudah analytics menggunakan Spark SQL dan penyimpanan ke warehouse.
+
+5. **Menambahkan Ingestion Timestamp**
+
+   Setiap row diberikan atribut:
+
+   ```text
+   ingestion_timestamp
+   ```
+
+   untuk mencatat waktu data diambil oleh pipeline.
+
+6. **Membuat DataFrame**
+
+   Data hasil parsing dan flattening dikonversi menjadi **Pandas DataFrame**.
+
+7. **Menyimpan ke Data Lake**
+
+   Dataset disimpan ke:
+
+   ```text
+   /opt/airflow/data_lake/task2/
+   ```
+
+   menggunakan format **Apache Parquet**.
+
+### Final Dataset Schema
+
+| Feature |
+|----------|
+| order_id |
+| user_id |
+| order_number |
+| order_dow |
+| order_hour_of_day |
+| days_since_prior_order |
+| product_id |
+| product_name |
+| department |
+| aisle |
+| add_to_cart_order |
+| reordered |
+| ingestion_timestamp |
+
+### Output
+
+Contoh output file:
+
+```text
+orders_20260517_143022.parquet
+```
+
+Format **Apache Parquet** dipilih karena:
+
+- columnar storage
+- kompresi lebih efisien
+- optimal untuk pemrosesan Spark
+- umum digunakan dalam pipeline Data Engineering
 
 ### Struktur Output
 
-```
-/opt/airflow/data_lake/task2/
-├── orders_20260515_080000.parquet
-├── orders_20260515_090000.parquet
-└── ...
-```
+Sebelum pipeline diorkestrasi menggunakan Apache Airflow, setiap tahapan proses diuji terlebih dahulu melalui terminal untuk melakukan validasi fungsi, alur data, dan output yang dihasilkan:
+
+![alt text](image-1.png)
+
+Contoh Output:
+
+![alt text](image-2.png)
 
 ---
 
-## 🔍 Dataset Explanation & EDA
+## 🔍 Dataset Explanation 
 
 ### Dataset Overview
 
 Dataset merupakan data transaksi e-commerce / grocery (Instacart-style) yang merekam perilaku pembelian user secara detail.
+
+### Visualisasi Struktur Nested JSON Dataset
+
+![alt text](image-3.png)
 
 ### Schema
 
@@ -131,23 +280,9 @@ Dataset merupakan data transaksi e-commerce / grocery (Instacart-style) yang mer
 | `reordered` | UInt8 | 1 = pernah dibeli sebelumnya, 0 = pertama kali |
 | `ingestion_timestamp` | String | Waktu data dimasukkan ke sistem |
 
-### Key Statistics
+### Preview Isi File Parquet
 
-```
-Total Records      : ~3,000,000+ rows
-Unique Users       : ~200,000+
-Unique Products    : ~50,000+
-Unique Departments : 21
-Order Hours        : 0 – 23
-Reorder Rate       : ~0.59 (59% item adalah reorder)
-```
-
-### Distribusi Penting
-
-- **Jam tersibuk** : 10:00 – 15:00
-- **Hari tersibuk** : Sunday & Monday
-- **Department terpopuler** : Produce, Dairy Eggs, Snacks
-- **Produk #1** : Banana (reorder rate ~0.84)
+![alt text](image-4.png)
 
 ---
 
@@ -155,84 +290,219 @@ Reorder Rate       : ~0.59 (59% item adalah reorder)
 
 Script `process_task2_spark.py` menggunakan Apache Spark untuk memproses seluruh file Parquet di Data Lake secara paralel dan menghasilkan 4 analytics table.
 
-### Inisialisasi Spark
+#### Workflow
+
+```text
+Parquet Files (Data Lake)
+        ↓
+Spark Read Parquet
+        ↓
+Data Processing & Aggregation
+        ↓
+Generate Analytics Tables
+        ↓
+Data Type Validation & Casting
+        ↓
+Load to ClickHouse Warehouse
+        ↓
+Cleanup Processed Parquet Files
+```
+
+### 1. Membaca Data dari Data Lake
+
+Pipeline membaca seluruh file parquet yang tersedia pada folder:
+
+```text
+/opt/airflow/data_lake/task2/
+```
+
+menggunakan Apache Spark.
 
 ```python
-spark = SparkSession.builder \
-    .appName("Orders_Analytics_Pipeline") \
-    .config("spark.driver.memory", "1g") \
-    .getOrCreate()
+spark.read.parquet(...)
+```
 
-df_raw = spark.read.parquet("file:///opt/airflow/data_lake/task2/")
+Karena Spark mendukung pembacaan multi-file secara langsung, seluruh batch data dapat diproses sekaligus.
+
+Dataset kemudian di-cache menggunakan:
+
+```python
 df_raw.cache()
 ```
 
-### Analytics yang Dihitung
+untuk meningkatkan performa pada proses analytics yang menggunakan dataframe yang sama berulang kali.
 
-#### 1. Product Analytics
+### 2. Product Analytics Processing
 
-```python
-analytics_df = df_raw.groupBy("product_name", "department").agg(
-    F.count("order_id").alias("total_orders"),
-    F.sum(F.when(F.col("reordered") == 1, 1).otherwise(0)).alias("reorder_count")
-).withColumn(
-    "reorder_rate",
-    F.round(F.col("reorder_count") / F.col("total_orders"), 2)
-)
+Pipeline melakukan agregasi analytics berdasarkan:
+
+- `product_name`
+- `department`
+
+Metrik yang dihitung:
+
+| Metric | Description |
+|---------|-------------|
+| total_orders | Total jumlah transaksi produk |
+| reorder_count | Total produk yang di-reorder |
+| reorder_rate | Persentase reorder terhadap total transaksi |
+
+Formula reorder rate:
+
+```text
+reorder_rate = reorder_count / total_orders
 ```
 
-#### 2. Hourly Analytics
+Contoh insight yang dapat digali:
 
-```python
-hourly_df = df_raw.groupBy("order_hour_of_day").agg(
-    F.count("order_id").alias("total_orders")
-).orderBy("order_hour_of_day")
+- Produk paling populer.
+- Produk dengan tingkat pembelian ulang tertinggi.
+- Performa produk per departemen.
+
+### 3. Hourly Analytics Processing
+
+Pipeline melakukan grouping berdasarkan:
+
+```text
+order_hour_of_day
 ```
 
-#### 3. Department Analytics
+untuk memperoleh distribusi jumlah transaksi per jam.
 
-```python
-department_df = df_raw.groupBy("department").agg(
-    F.count("order_id").alias("total_orders")
-)
+Metrik:
+
+- `total_orders`
+
+Insight yang dapat diperoleh:
+
+- Jam tersibuk pelanggan melakukan pemesanan.
+- Pola aktivitas pembelian harian.
+
+### 4. Department Analytics Processing
+
+Analytics departemen dihitung melalui grouping:
+
+```text
+department
 ```
 
-### Fix: Pandas Float → ClickHouse Int
+untuk memperoleh total volume transaksi tiap departemen.
 
-Masalah utama: pandas otomatis mengubah nullable integer menjadi `float64` saat `toPandas()`. Solusi yang digunakan:
+Insight:
 
-```python
-# Step 1: Cast di Spark sebelum toPandas
-for c in int_cols:
-    raw_data_spark = raw_data_spark.withColumn(c, F.col(c).cast(T.LongType()))
+- Departemen dengan aktivitas pembelian tertinggi.
+- Distribusi penjualan antar kategori produk.
 
-# Step 2: Convert ke Python native int/None via .tolist()
-for col in all_int_columns:
-    raw_data[col] = [
-        None if (v != v or v is None) else int(v)
-        for v in raw_data[col].tolist()
-    ]
+### 5. ClickHouse Data Warehouse Initialization
 
-# Step 3: Insert via to_dict (bukan itertuples)
-raw_data_tuples = [
-    tuple(row[col] for col in raw_data.columns)
-    for row in raw_data.to_dict(orient="records")
-]
+Pipeline melakukan koneksi ke ClickHouse Warehouse.
+
+Database analytics dibuat secara otomatis apabila belum tersedia:
+
+```sql
+CREATE DATABASE IF NOT EXISTS analytics
 ```
+
+Kemudian dibuat empat tabel warehouse:
+
+| Table | Function |
+|-------|----------|
+| raw_orders | Menyimpan raw transactional dataset |
+| product_analytics | Menyimpan analytics produk |
+| hourly_analytics | Menyimpan analytics per jam |
+| department_analytics | Menyimpan analytics per departemen |
+
+### 6. Data Type Validation & Safe Casting
+
+Sebelum proses insert ke ClickHouse, pipeline melakukan validasi tipe data.
+
+Beberapa helper function digunakan:
+
+#### safe_int()
+
+Digunakan untuk:
+
+- menangani nilai NULL
+- menghindari type mismatch
+- memastikan seluruh numeric column menjadi Python native integer.
+
+#### safe_str()
+
+Digunakan untuk:
+
+- menangani nilai kosong
+- memastikan seluruh string column valid sebelum insert.
+
+Tahap ini penting karena ClickHouse memiliki validasi tipe data yang ketat.
+
+### 7. Loading Data ke Warehouse
+
+Pipeline menggunakan mode:
+
+```text
+TRUNCATE + INSERT
+```
+
+agar dashboard selalu menampilkan data terbaru.
+
+Flow:
+
+```text
+TRUNCATE TABLE
+      ↓
+Prepare tuples
+      ↓
+INSERT INTO ClickHouse
+```
+
+Setiap analytics table di-overwrite menggunakan batch terbaru.
+
+### 8. Cleanup Data Lake
+
+Setelah proses warehouse selesai, file parquet lama dihapus otomatis:
+
+```text
+/opt/airflow/data_lake/task2/*.parquet
+```
+
+Tujuan cleanup:
+
+- mencegah penumpukan batch lama
+- menjaga storage tetap efisien
+- menghindari duplicate processing.
+
+
+### Output Warehouse Tables
+
+#### 1. analytics.raw_orders
+
+Raw transactional dataset.
+
+#### 2. analytics.product_analytics
+
+Analytics produk dan reorder behavior.
+
+#### 3. analytics.hourly_analytics
+
+Analytics distribusi transaksi per jam.
+
+#### 4. analytics.department_analytics
+
+Analytics volume transaksi per departemen.
 
 ---
 
-## 🐳 Docker Setup
+## 🐳 Docker Setup 
 
-### Versi & Environment
+### Versions & Environment
 
 ```env
-# .env
-AIRFLOW_VERSION=2.8.1
+AIRFLOW_VERSION=2.9.1
 PYTHON_VERSION=3.11
-CLICKHOUSE_VERSION=23.8
-METABASE_VERSION=latest
 SPARK_VERSION=3.5.0
+CLICKHOUSE_VERSION=23.8
+POSTGRES_VERSION=13
+METABASE_VERSION=latest
 ```
 
 ### docker-compose.yml (ringkasan)
@@ -304,9 +574,9 @@ RUN pip install --no-cache-dir \
 
 ---
 
-## ✅ Proof — ClickHouse & Airflow
+## ✅ Proof: ClickHouse & Airflow
 
-### Airflow — DAG Berhasil
+### Airflow: DAG Berhasil
 
 Pipeline berjalan terjadwal setiap jam via Airflow DAG `task2_orders_pipeline`.
 
@@ -324,9 +594,10 @@ Pipeline berjalan terjadwal setiap jam via Airflow DAG `task2_orders_pipeline`.
 [2026-05-15, 09:06:23 UTC] INFO - ✅ Pipeline Selesai!
 ```
 
-> 📸 **[Screenshot Airflow DAG success — tambahkan di sini]**
+![alt text](image-5.png)
+![alt text](image-6.png)
 
-### ClickHouse — Data Verified
+### ClickHouse: Data Verified
 
 ```sql
 -- Verifikasi data masuk
@@ -338,14 +609,14 @@ GROUP BY table;
 
 ```
 ┌─table────────────────────┬─total_rows───┐
-│ raw_orders               │ 3.21 million │
-│ product_analytics        │ 39.12 thousand │
-│ hourly_analytics         │ 24           │
-│ department_analytics     │ 21           │
+│ raw_orders               │ 21 │
+│ product_analytics        │ 912 │
+│ hourly_analytics         │ 736           │
+│ department_analytics     │ 20           │
 └──────────────────────────┴──────────────┘
 ```
 
-> 📸 **[Screenshot ClickHouse query result — tambahkan di sini]**
+![alt text](image-7.png)
 
 ---
 
