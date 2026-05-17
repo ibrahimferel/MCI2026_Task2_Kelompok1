@@ -2,12 +2,12 @@
 
 ### Grocery Orders Analytics Dashboard - Pipeline Detailing Explanation
 
-<!-- ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Spark](https://img.shields.io/badge/Apache_Spark-3.x-E25A1C?style=flat-square&logo=apachespark&logoColor=white)
 ![Airflow](https://img.shields.io/badge/Airflow-2.x-017CEE?style=flat-square&logo=apacheairflow&logoColor=white)
 ![ClickHouse](https://img.shields.io/badge/ClickHouse-latest-FFCC01?style=flat-square&logo=clickhouse&logoColor=black)
 ![Metabase](https://img.shields.io/badge/Metabase-latest-509EE3?style=flat-square&logo=metabase&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white) -->
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 
 </div>
 
@@ -33,9 +33,9 @@
 ## 👥 Kelompok 1
 
 <table align="center">
-    <!-- <p align="center">
+    <p align="center">
     <img src="asset_documentation/farel-ferel.gif" width="700"/>
-    </p> -->
+    </p>
     <td align="center" width="320">
       <b>Ibrahim Ferel</b>
       <br>
@@ -55,31 +55,8 @@
 
 ## 🗺️ Pipeline Architecture
 
-Pipeline ini mengikuti arsitektur **ELT (Extract → Load → Transform)** berbasis Big Data dengan orkestrasi penuh menggunakan Apache Airflow.
+Pipeline ini mengikuti arsitektur **ELT (Extract -> Load -> Transform)** berbasis Big Data dengan orkestrasi penuh menggunakan Apache Airflow.
 
-```mermaid
-flowchart TD
-    A([🌐 Instacart API / Dataset]) -->|HTTP Fetch| B[📥 Fetch Script\nfetch_task2.py]
-    B -->|Write Parquet| C[(📁 Data Lake\n/data_lake/task2/)]
-    C -->|Read all .parquet| D[⚡ Spark\nprocess_task2_spark.py]
-
-    D -->|product analytics| E1[(🗄️ product_analytics)]
-    D -->|hourly analytics| E2[(🗄️ hourly_analytics)]
-    D -->|department analytics| E3[(🗄️ department_analytics)]
-    D -->|raw orders| E4[(🗄️ raw_orders)]
-
-    E1 & E2 & E3 & E4 --> F[(🏛️ ClickHouse\nanalytics DB)]
-    F -->|SQL Query| G[📊 Metabase\nDashboard]
-
-    H([🔁 Apache Airflow]) -.->|Orchestrate & Schedule| B
-    H -.->|Orchestrate & Schedule| D
-
-    style A fill:#E8F4FD,stroke:#2196F3
-    style C fill:#FFF8E1,stroke:#FFC107
-    style F fill:#E8F5E9,stroke:#4CAF50
-    style G fill:#F3E5F5,stroke:#9C27B0
-    style H fill:#FBE9E7,stroke:#FF5722
-```
 
 ### Flow Summary
 
