@@ -85,7 +85,7 @@ flowchart TD
 
 | Step | Script | Output |
 |------|--------|--------|
-| 1 — Fetch | `fetch_task2_stream.py` | `.parquet` files di Data Lake |
+| 1 — Fetch | `fetch_task2.py` | `.parquet` files di Data Lake |
 | 2 — Process | `process_task2_spark.py` | 4 tabel di ClickHouse |
 | 3 — Visualize | Metabase | Dashboard analytics |
 | Orchestrator | Airflow DAG | Schedule & monitor semua step |
