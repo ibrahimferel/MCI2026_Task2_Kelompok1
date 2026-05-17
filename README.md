@@ -33,9 +33,9 @@
 ## 👥 Kelompok 1
 
 <table align="center">
-    <!-- <p align="center">
+    <p align="center">
     <img src="asset_documentation/farel-ferel.gif" width="700"/>
-    </p> -->
+    </p>
     <td align="center" width="320">
       <b>Ibrahim Ferel</b>
       <br>
