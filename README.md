@@ -2,12 +2,12 @@
 
 ### Grocery Orders Analytics Dashboard - Pipeline Detailing Explanation
 
-![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
+<!-- ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Spark](https://img.shields.io/badge/Apache_Spark-3.x-E25A1C?style=flat-square&logo=apachespark&logoColor=white)
 ![Airflow](https://img.shields.io/badge/Airflow-2.x-017CEE?style=flat-square&logo=apacheairflow&logoColor=white)
 ![ClickHouse](https://img.shields.io/badge/ClickHouse-latest-FFCC01?style=flat-square&logo=clickhouse&logoColor=black)
 ![Metabase](https://img.shields.io/badge/Metabase-latest-509EE3?style=flat-square&logo=metabase&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white) -->
 
 </div>
 
@@ -33,9 +33,9 @@
 ## 👥 Kelompok 1
 
 <table align="center">
-    <p align="center">
+    <!-- <p align="center">
     <img src="asset_documentation/farel-ferel.gif" width="700"/>
-    </p>
+    </p> -->
     <td align="center" width="320">
       <b>Ibrahim Ferel</b>
       <br>
@@ -85,7 +85,7 @@ flowchart TD
 
 | Step | Script | Output |
 |------|--------|--------|
-| 1 — Fetch | `fetch_task2.py` | `.parquet` files di Data Lake |
+| 1 — Fetch | `fetch_task2_stream.py` | `.parquet` files di Data Lake |
 | 2 — Process | `process_task2_spark.py` | 4 tabel di ClickHouse |
 | 3 — Visualize | Metabase | Dashboard analytics |
 | Orchestrator | Airflow DAG | Schedule & monitor semua step |
