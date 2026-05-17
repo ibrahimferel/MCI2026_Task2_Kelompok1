@@ -609,9 +609,9 @@ GROUP BY table;
 
 ```
 ┌─table────────────────────┬─total_rows───┐
-│ raw_orders               │ 21 │
-│ product_analytics        │ 912 │
-│ hourly_analytics         │ 736           │
+│ raw_orders               │ 21           │
+│ product_analytics        │ 912          │
+│ hourly_analytics         │ 736          │
 │ department_analytics     │ 20           │
 └──────────────────────────┴──────────────┘
 ```
@@ -631,38 +631,40 @@ Semua visualisasi dibangun di Metabase menggunakan query langsung ke ClickHouse.
 | A1 | Top 10 Most Ordered Products | Row |
 | A2 | Top 10 Products by Reorder Rate | Row |
 | A3 | Products with Lowest Reorder Rate | Row |
-| A7 | Evergreen Products — High Orders & High Loyalty | Scatter |
+| A4 | Unique Products & Total Orders per Department | Bar |
+| A5 | Average Reorder Rate per Department | Bar |
+| A6 | Top 5 Products per Department | Table |
+| A7 | Evergreen Products: High Orders & High Loyalty | Scatter |
 | A8 | Reorder Rate Distribution by Bucket | Pie |
 | A9 | Total Orders vs Reorders by Department | Combo |
+| A10 | First-Time Buyer Dominant Products | Row |
 
 ### Table: `hourly_analytics`
 
 | Query | Judul | Chart |
 |-------|-------|-------|
-| B1 | Order Distribution by Hour of Day | Line |
-| B4 | Order Volume by Time Segment | Pie |
-| B5 | Cumulative Orders Throughout the Day | Area |
-| B6 | Hourly Orders vs Daily Average | Combo |
+| B1 | Order Distributi............ | L.... |
+| B2 | Order t.............. | P.... |
+| B3 | Cumulative Order............. | A...... |
+| B4 | Hour........................ | C........ |
 
 ### Table: `department_analytics`
 
 | Query | Judul | Chart |
 |-------|-------|-------|
-| C1 | Department Ranking by Market Share | Row |
-| C4 | Cumulative Market Share — Pareto Analysis | Combo |
-| C5 | Departments Above and Below Average | Row |
+| C1 | Department Ranki................. | R....... |
+| C2 | Cumulative M.............. | C..... |
+| C3 | Departments........... | R............ |
 
 ### Table: `raw_orders`
 
 | Query | Judul | Chart |
 |-------|-------|-------|
-| D1 | Overall Transaction Summary | Table |
-| D2 | Order Distribution by Day of Week | Bar |
-| D5 | Overall Reorder Rate | Pie |
-| D8 | Days Between Orders Distribution | Bar |
-| D10 | Order Heatmap — Day of Week vs Hour | Table |
-
-> 📸 **[Screenshot dashboard Metabase — tambahkan di sini]**
+| D1 | Overall T................ | Ta... |
+| D2 | Order Dist................ | B..... |
+| D5 | Over..................... | P.... |
+| D8 | Days Be..................... | B.... |
+| D10 | Order Heatmap................ | T........ |
 
 ---
 
@@ -671,7 +673,50 @@ Semua visualisasi dibangun di Metabase menggunakan query langsung ke ClickHouse.
 Dashboard Metabase dibagi menjadi **4 section utama**:
 
 ### 1. 🛍️ Product Performance
-Menampilkan produk-produk terpopuler, tingkat loyalitas pelanggan (loyalty score), serta distribusi reorder rate. Highlight utama adalah **Scatter chart A7** yang memperlihatkan posisi tiap produk berdasarkan volume order dan reorder rate sekaligus — satu chart yang langsung menjawab "produk mana yang benar-benar penting?"
+Menyajikan analisis performa produk melalui jumlah pemesanan, perilaku reorder pelanggan, dan distribusi metrik produk. Visualisasi ini membantu memahami produk mana yang paling sering dibeli, paling konsisten di-reorder, dan paling berpengaruh dalam keseluruhan dataset.
+
+![alt text](image-8.png)
+![alt text](image-9.png)
+
+#### A1.     Top 10 Most Ordered Products (Row Chart)
+
+= Menampilkan 10 produk dengan jumlah pemesanan tertinggi untuk mengidentifikasi produk paling populer dan paling sering muncul dalam transaksi. Berdasarkan hasil analisis pada dataset, daftar produk dengan volume order tertinggi didominasi oleh produk dari departemen produce. Selain itu, jumlah order pada kelompok top 10 products berada pada kisaran sekitar 7–17 transaksi, menunjukkan produk-produk dengan tingkat permintaan relatif lebih tinggi dibandingkan produk lainnya dalam dataset.
+
+#### A2.     Top 10 Products by Reorder Rate (Row Chart)
+
+= Menggali produk dengan tingkat pembelian ulang tertinggi sebagai indikator loyalitas atau kecenderungan pelanggan membeli kembali produk tertentu. Dari hasil analisis, terlihat adanya perbedaan komposisi ketika peringkat produk ditentukan berdasarkan reorder rate dibandingkan jumlah order. Pada kategori ini, muncul produk dari departemen beverages, yaitu Lime Sparkling Water, sementara sebagian besar produk lainnya masih relatif serupa dengan daftar produk berperforma tinggi berdasarkan total order. Hal ini menunjukkan bahwa popularitas produk dan tingkat loyalitas pelanggan tidak selalu menghasilkan peringkat yang identik.
+
+#### A3.     Products with Lowest Reorder Rate (Row Chart)
+
+= Menunjukkan produk dengan tingkat reorder terendah untuk membantu mengidentifikasi produk yang jarang dibeli ulang atau memiliki tingkat loyalitas pelanggan yang rendah. Berdasarkan hasil analisis, daftar produk dengan reorder rate terendah masih cukup didominasi oleh produk dari departemen produce. Namun, muncul pula beberapa produk dari departemen lain yang sebelumnya tidak menonjol pada analisis sebelumnya, seperti canned goods, frozen, dan pantry. Temuan ini mengindikasikan bahwa produk pada departemen tersebut cenderung memiliki tingkat pembelian ulang yang lebih rendah, sehingga pelanggan relatif lebih jarang melakukan pembelian kembali terhadap produk-produk tersebut.
+
+#### A4.     Unique Products & Total Orders per Department (Bar Chart)
+
+= Menganalisis jumlah variasi produk dan total aktivitas pemesanan pada setiap departemen untuk melihat skala serta keragaman katalog produk. Berdasarkan visualisasi yang diperoleh, departemen dengan jumlah produk unik (total products) sekaligus aktivitas pemesanan tertinggi didominasi oleh produce, diikuti oleh dairy eggs dan snacks. Hal ini menunjukkan bahwa ketiga departemen tersebut memiliki keragaman produk yang relatif besar serta tingkat permintaan pelanggan yang cukup tinggi dibandingkan departemen lainnya.
+
+#### A5.     Average Reorder Rate per Department (Bar Chart)
+
+= Membandingkan rata-rata tingkat reorder antar departemen untuk memahami kategori produk mana yang memiliki pola loyalitas pelanggan yang lebih tinggi. Berdasarkan hasil analisis, departemen bulk menunjukkan nilai rata-rata reorder rate tertinggi dibandingkan departemen lainnya. Namun, jumlah total orders pada kategori tersebut relatif sangat rendah, sehingga insight yang diperoleh kurang representatif untuk menggambarkan perilaku pelanggan secara umum. Jika mempertimbangkan keseimbangan antara tingkat reorder dan volume transaksi, departemen produce, dairy eggs, dan snacks menjadi kategori yang terlihat paling kuat dan konsisten dalam menunjukkan kombinasi antara aktivitas pemesanan tinggi dan loyalitas pelanggan yang baik.
+
+#### A6.     Top 5 Products per Department (Table)
+
+= Menampilkan lima produk terbaik pada setiap departemen berdasarkan performa order sehingga dapat terlihat produk unggulan pada masing-masing kategori. Melalui visualisasi ini, kita dapat membandingkan produk-produk teratas dari setiap departemen berdasarkan kombinasi total orders dan reorder rate. Hasil analisis menunjukkan bahwa beberapa produk memiliki performa yang menonjol di kategorinya masing-masing, dengan Lime Sparkling Water menjadi salah satu produk yang berada pada posisi teratas berdasarkan keseimbangan antara volume pemesanan dan tingkat pembelian ulang pelanggan.
+
+#### A7.     Evergreen Products: High Orders & High Loyalty (Scatter Chart)
+
+= Memetakan hubungan antara jumlah order dan reorder rate untuk mengidentifikasi produk yang memiliki permintaan tinggi sekaligus loyalitas pelanggan yang kuat. Berdasarkan pola yang terlihat dari analisis-analisis sebelumnya, produk dari departemen produce memang menunjukkan performa yang paling konsisten, baik dari sisi volume pemesanan maupun tingkat pembelian ulang pelanggan. Oleh karena itu, cukup wajar apabila posisi teratas pada visualisasi ini didominasi oleh produk-produk dari departemen produce, seperti Organic Strawberries, Banana, dan beberapa produk sejenis lainnya yang memiliki kombinasi kuat antara popularitas dan loyalitas pelanggan.
+
+#### A8.     Reorder Rate Distribution by Bucket (Pie Chart)
+
+=
+
+#### A9.     Total Orders vs Reorders by Department (Combo Chart)
+
+=
+
+### A10.     First-Time Buyer Dominant Products (Row Chart)
+
+=
 
 ### 2. 🕐 Hourly & Time Pattern
 Menampilkan pola pemesanan sepanjang hari. **Line chart B1** menunjukkan kurva order per jam, sementara **Area chart B5** memperlihatkan akumulasi order secara kumulatif. Dashboard ini berguna untuk menentukan waktu terbaik untuk push notification, flash sale, atau restocking.
