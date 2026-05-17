@@ -33,9 +33,9 @@
 ## 👥 Kelompok 1
 
 <table align="center">
-    <p align="center">
+    <!-- <p align="center">
     <img src="asset_documentation/farel-ferel.gif" width="700"/>
-    </p>
+    </p> -->
     <td align="center" width="320">
       <b>Ibrahim Ferel</b>
       <br>
@@ -57,14 +57,15 @@
 
 Pipeline ini mengikuti arsitektur **ELT (Extract -> Load -> Transform)** berbasis Big Data dengan orkestrasi penuh menggunakan Apache Airflow.
 
+![alt text](asset_documentation/image.png)
 
 ### Flow Summary
 
 | Step | Script | Output |
 |------|--------|--------|
-| 1 — Fetch | `fetch_task2_stream.py` | `.parquet` files di Data Lake |
-| 2 — Process | `process_task2_spark.py` | 4 tabel di ClickHouse |
-| 3 — Visualize | Metabase | Dashboard analytics |
+| Fetch | `fetch_task2_stream.py` | `.parquet` files di Data Lake |
+| Process | `process_task2_spark.py` | 4 tabel di ClickHouse |
+| Visualize | Metabase | Dashboard analytics |
 | Orchestrator | Airflow DAG | Schedule & monitor semua step |
 
 ---
