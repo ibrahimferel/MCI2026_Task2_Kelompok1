@@ -1028,6 +1028,10 @@ Departemen Informatika - 2024
 
 <br>
 
+## Pembagian Tugas
+1. Ibrahim Ferel : Menyusun script untuk fetch ke dataset, membuat script dan setup pipeline airflow, menyusun query dan dashboard metabase, menyusun dokumentasi readme
+2. Afarrel Febryan G. : membuat script dan setup pipeline airflow, meyusun query dan dashboard metabase, membantu ferel menyusun dokumentasi readme
+
 *Bismillah Admin Lab Manajemen Cerdas Informasi <3*
 
 </div>
