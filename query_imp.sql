@@ -1,11 +1,10 @@
--- ANALYTICS QUERIES - ClickHouse Warehouse
+-- Analytics Query
 -- Database: analytics
--- Tables: raw_orders, product_analytics, hourly_analytics,
---         department_analytics
+-- Tables: raw_orders, product_analytics, hourly_analytics,department_analytics
 
 -- A. Product Analytics
--- A1. Top 10 produk paling banyak dipesan 
--- VISUALISASI: Row chart
+-- A1. Top 10 most ordered products
+-- Visualisasi: Row chart
 SELECT
     product_name,
     department,
@@ -16,93 +15,90 @@ FROM analytics.product_analytics
 ORDER BY total_orders DESC
 LIMIT 10;
 
--- A2. Top 10 produk dengan reorder rate tertinggi (min 5 orders)
--- VISUALISASI: Row chart
+-- A2. Top 10 products with the highest reorder rate (min 5 orders)
+-- Visualisasi: Row chart
 SELECT
     product_name,
     department,
     total_orders,
-	reorder_count,
+    reorder_count,
     reorder_rate
 FROM analytics.product_analytics
-WHERE total_orders >= 5
+WHERE
+    total_orders >= 5
 ORDER BY reorder_rate DESC
 LIMIT 10;
 
 -- A3. Products with Lowest Reorder Rate
--- VISUALISASI: Row chart
+-- Visualisasi: Row chart
 SELECT
     product_name,
     department,
     total_orders,
-	reorder_count,
+    reorder_count,
     reorder_rate
 FROM analytics.product_analytics
 ORDER BY reorder_rate ASC
 LIMIT 10;
 
 -- A4. Unique Products & Total Orders per Department
--- VISUALISASI: Bar chart (departments on x-axis, total orders on y-axis)
+-- Visualisasi: Bar chart (departments on x-axis, total orders on y-axis)
 SELECT
     department,
     count(product_name) AS total_products,
-    sum(total_orders)   AS total_orders_dept
+    sum(total_orders) AS total_orders_dept
 FROM analytics.product_analytics
-GROUP BY department
+GROUP BY
+    department
 ORDER BY total_orders_dept DESC;
 
 -- A5. Average Reorder Rate per Department
--- VISUALISASI: Bar chart (departments on x-axis, average reorder rate on y-axis)
+-- Visualisasi: Bar chart (departments on x-axis, average reorder rate on y-axis)
 SELECT
     department,
     round(avg(reorder_rate), 4) AS avg_reorder_rate,
-    sum(total_orders)           AS total_orders
+    sum(total_orders) AS total_orders
 FROM analytics.product_analytics
-GROUP BY department
+GROUP BY
+    department
 ORDER BY avg_reorder_rate DESC;
 
--- A6. Top 5 Products per Department
--- VISUALISASI: Table
-SELECT *
-FROM (
-    SELECT
-        department,
-        product_name,
-        total_orders,
-        reorder_rate,
-
-        total_orders * reorder_rate AS impact_score,
-
-        row_number() OVER (
-            PARTITION BY department
-            ORDER BY
-                (total_orders * reorder_rate) DESC,
-                total_orders DESC
-        ) AS rank_in_dept
-
-    FROM analytics.product_analytics
-    WHERE total_orders >= 3 --karena kita pengen seenggaknya ada 5 yang bisa kita lihat sebagai top product per masing" departemen
-)
-WHERE rank_in_dept = 1
-ORDER BY department, rank_in_dept
-LIMIT 5;
-
+-- A6. Top 5 produk per department (window function)
+-- Visualisasi: Table
+SELECT
+    department,
+    product_name,
+    total_orders,
+    reorder_rate,
+    rank() OVER (
+        PARTITION BY
+            department
+        ORDER BY total_orders DESC
+    ) AS rank_in_dept
+FROM analytics.product_analytics
+WHERE
+    rank_in_dept <= 5
+ORDER BY department, rank_in_dept;
 
 -- A7. Evergreen Products: High Orders & High Loyalty
--- VISUALISASI: Table
+--Visualisasi: Table
 SELECT
     product_name,
     department,
     total_orders,
     reorder_rate,
-    round(total_orders * reorder_rate, 2) AS loyalty_score
+    round(
+        total_orders * reorder_rate,
+        2
+    ) AS loyalty_score
 FROM analytics.product_analytics
-WHERE total_orders >= 30
+WHERE
+    total_orders >= 30
 ORDER BY loyalty_score DESC
 LIMIT 15;
 
 -- A8. Reorder Rate Distribution by Bucket
--- VISUALISASI: Pie Chart
+--Visualisasi: Pie Chart
 SELECT
     CASE
         WHEN reorder_rate >= 0.8 THEN 'High (>=80%)'
@@ -113,26 +109,27 @@ SELECT
     count(*) AS product_count,
     sum(total_orders) AS total_orders
 FROM analytics.product_analytics
-GROUP BY reorder_bucket
+GROUP BY
+    reorder_bucket
 ORDER BY total_orders DESC;
 
 -- A9. Total Orders vs Reorders by Department
--- VISUALISASI: Combo Bar Chart
+-- Visualisasi: Combo Bar Chart
 SELECT
     department,
-    sum(total_orders) AS dept_total_orders,
-    sum(reorder_count) AS dept_total_reorders,
+    sum(total_orders) AS total_orders,
+    sum(reorder_count) AS total_reorders,
     round(
-        sum(reorder_count) * 1.0
-        / sum(total_orders),
+        sum(reorder_count) / sum(total_orders),
         4
     ) AS dept_reorder_rate
 FROM analytics.product_analytics
-GROUP BY department
+GROUP BY
+    department
 ORDER BY dept_reorder_rate DESC;
 
--- A10. Produk first-time buyer dominant
--- VISUALISASI: Row Chart
+-- A10. Produk first - time buyer dominant
+-- Visualisasi: Row Chart
 SELECT
     product_name,
     department,
@@ -140,11 +137,11 @@ SELECT
     reorder_rate,
     (total_orders - reorder_count) AS new_buyer_orders
 FROM analytics.product_analytics
-WHERE reorder_rate < 0.3
-  AND total_orders >= 2 -- 2 kita anggap besar, demi tercipta top 5
+WHERE
+    reorder_rate < 0.3
+    AND total_orders >= 10
 ORDER BY new_buyer_orders DESC
-LIMIT 5;
-
+LIMIT 15;
 
 -- B. Hourly Analytics
 -- B1. Distribusi Order per Hour
