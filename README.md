@@ -33,9 +33,6 @@
 ## Kelompok 1
 
 <table align="center">
-    <p align="center">
-      <img src="task2/asset_documentation/" width="800"/>
-    </p>
     <td align="center" width="320">
       <b>Ibrahim Ferel</b>
       <br>
