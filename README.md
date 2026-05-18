@@ -72,7 +72,7 @@ Pipeline ini mengikuti arsitektur **ELT (Extract -> Load -> Transform)** berbasi
 
 ## Fetch API & Data Ingestion
 
-Script `fetch_task2.py` bertugas mengambil data order dari sumber (Instacart-style dataset) dan menyimpannya ke Data Lake dalam format **Parquet**.
+Script `fetch_task2_stream.py` bertugas mengambil data order dari sumber (Instacart-style dataset) dan menyimpannya ke Data Lake dalam format **Parquet**.
 
 ### Workflow
 
