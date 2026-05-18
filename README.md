@@ -57,7 +57,7 @@
 
 Pipeline ini mengikuti arsitektur **ELT (Extract -> Load -> Transform)** berbasis Big Data dengan orkestrasi penuh menggunakan Apache Airflow.
 
-![alt text](image.png)
+![alt text](asset_documentation/image.png)
 
 ### Flow Summary
 
@@ -244,11 +244,11 @@ Format **Apache Parquet** dipilih karena:
 
 Sebelum pipeline diorkestrasi menggunakan Apache Airflow, setiap tahapan proses diuji terlebih dahulu melalui terminal untuk melakukan validasi fungsi, alur data, dan output yang dihasilkan:
 
-![alt text](image-1.png)
+![alt text](asset_documentation/image-1.png)
 
 Contoh Output:
 
-![alt text](image-2.png)
+![alt text](asset_documentation/image-2.png)
 
 ---
 
@@ -260,7 +260,7 @@ Dataset merupakan data transaksi e-commerce / grocery (Instacart-style) yang mer
 
 ### Visualisasi Struktur Nested JSON Dataset
 
-![alt text](image-3.png)
+![alt text](asset_documentation/image-3.png)
 
 ### Schema
 
@@ -282,7 +282,7 @@ Dataset merupakan data transaksi e-commerce / grocery (Instacart-style) yang mer
 
 ### Preview Isi File Parquet
 
-![alt text](image-4.png)
+![alt text](asset_documentation/image-4.png)
 
 ---
 
@@ -574,7 +574,7 @@ RUN pip install --no-cache-dir \
 
 ---
 
-## ✅ Proof: ClickHouse & Airflow
+## Proof: ClickHouse & Airflow
 
 ### Airflow: DAG Berhasil
 
@@ -594,8 +594,8 @@ Pipeline berjalan terjadwal setiap jam via Airflow DAG `task2_orders_pipeline`.
 [2026-05-15, 09:06:23 UTC] INFO - ✅ Pipeline Selesai!
 ```
 
-![alt text](image-5.png)
-![alt text](image-6.png)
+![alt text](asset_documentation/image-5.png)
+![alt text](asset_documentation/image-6.png)
 
 ### ClickHouse: Data Verified
 
@@ -616,7 +616,7 @@ GROUP BY table;
 └──────────────────────────┴──────────────┘
 ```
 
-![alt text](image-7.png)
+![alt text](asset_documentation/image-7.png)
 
 ---
 
@@ -670,13 +670,14 @@ Semua visualisasi dibangun di Metabase menggunakan query langsung ke ClickHouse.
 
 ## 🎨 Dashboard Overview
 
-Dashboard Metabase dibagi menjadi **4 section utama**:
+Dashboard Metabase dibagi menjadi **4 section utama:**
 
-### 1. 🛍️ Product Performance
+### 1. Product Performance
 Menyajikan analisis performa produk melalui jumlah pemesanan, perilaku reorder pelanggan, dan distribusi metrik produk. Visualisasi ini membantu memahami produk mana yang paling sering dibeli, paling konsisten di-reorder, dan paling berpengaruh dalam keseluruhan dataset.
 
-![alt text](image-8.png)
-![alt text](image-9.png)
+![alt text](asset_documentation/image-8.png)
+![alt text](asset_documentation/image-9.png)
+![alt text](asset_documentation/image-10.png)
 
 #### A1.     Top 10 Most Ordered Products (Row Chart)
 
@@ -708,15 +709,15 @@ Menyajikan analisis performa produk melalui jumlah pemesanan, perilaku reorder p
 
 #### A8.     Reorder Rate Distribution by Bucket (Pie Chart)
 
-=
+= Melalui visualisasi pie chart reorder rate distribution, dilakukan pengelompokan tingkat reorder rate ke dalam beberapa kategori, misalnya Very Low, Low, Medium, High, dan Very High berdasarkan rentang nilai tertentu (contohnya 0.2, 0.5, 0.8, dan seterusnya). Dari hasil analisis, terlihat bahwa dataset ini memiliki cukup banyak produk dengan tingkat reorder rate tinggi, bahkan jumlahnya mencapai hampir lebih dari separuh distribusi. Menariknya, kategori dengan reorder rate sangat rendah (Very Low) juga menempati proporsi yang cukup besar. Hal ini menunjukkan adanya pola distribusi yang cukup terpolarisasi, dimana sebagian produk memiliki loyalitas pelanggan yang kuat, sementara sebagian lainnya cenderung jarang mengalami pembelian ulang.
 
 #### A9.     Total Orders vs Reorders by Department (Combo Chart)
 
-=
+= Membandingkan total orders dan total reorders pada setiap departemen untuk melihat keseimbangan antara volume penjualan dan tingkat pembelian ulang pelanggan. Berdasarkan combo chart, kembali terlihat bahwa departemen produce memiliki performa yang paling seimbang dan konsisten. Departemen ini menunjukkan jumlah order yang tinggi sekaligus diikuti oleh total reorder yang juga besar, menandakan bahwa produk-produk di kategori tersebut tidak hanya sering dibeli, tetapi juga cukup berhasil mendorong pelanggan untuk melakukan pembelian ulang. Di sisi lain, beberapa departemen lain terlihat memiliki perbedaan yang cukup signifikan antara total orders dan total reorders, yang dapat mengindikasikan adanya ketimpangan antara tingkat popularitas produk dan loyalitas pelanggan.
 
-### A10.     First-Time Buyer Dominant Products (Row Chart)
+#### A10.     First-Time Buyer Dominant Products (Row Chart)
 
-=
+= Melalui chart ini, kita dapat melihat produk-produk yang cukup sering dibeli pada pembelian awal, namun memiliki kecenderungan rendah untuk dibeli kembali (reorder). Menariknya, pola ini berbeda dengan analisis sebelumnya karena tidak lagi didominasi oleh departemen produce. Beberapa produk yang muncul sebagai contoh antara lain Sour Cream, Organic Zucchini, Peach Preserves, Original Spread, dan Blueberries. Hal ini menunjukkan bahwa meskipun suatu produk mampu menarik pembelian awal pelanggan, belum tentu produk tersebut berhasil mempertahankan minat pelanggan untuk melakukan pembelian ulang.
 
 ### 2. 🕐 Hourly & Time Pattern
 Menampilkan pola pemesanan sepanjang hari. **Line chart B1** menunjukkan kurva order per jam, sementara **Area chart B5** memperlihatkan akumulasi order secara kumulatif. Dashboard ini berguna untuk menentukan waktu terbaik untuk push notification, flash sale, atau restocking.
@@ -734,9 +735,10 @@ Overview keseluruhan data transaksi — jumlah order unik, user aktif, produk un
 Berikut insight utama yang diperoleh dari analisis pipeline ini:
 
 ### 🥇 Product Insights
-- **Banana** adalah produk #1 dengan order terbanyak dan reorder rate ~0.84 — artinya 84% pembelinya adalah repeat buyer
-- Produk kategori **produce** mendominasi top 10, menunjukkan kebutuhan grocery fresh adalah prioritas utama pelanggan
-- Terdapat produk dengan reorder rate < 0.2 yang mengindikasikan impulse buy atau one-time purchase — perlu strategi berbeda untuk mendorong pembelian ulang
+
+= Kalau dilihat secara keseluruhan, performa produk ternyata tidak sesederhana “siapa yang paling banyak dibeli” atau “siapa yang punya reorder rate paling tinggi”. Untuk mendapatkan gambaran yang lebih adil, kita perlu melihat kombinasi antara jumlah transaksi, tingkat pembelian ulang, keseimbangan performa, serta kategori departemennya.
+
+Dari berbagai analisis yang dilakukan, departemen produce terlihat paling konsisten dalam menjaga performanya. Produk-produk pada kategori ini tidak hanya sering dibeli, tetapi juga cukup berhasil membuat pelanggan kembali membeli produk yang sama. Meski begitu, beberapa kategori lain tetap menunjukkan karakteristik uniknya masing-masing, seperti produk yang kuat di pembelian awal namun lemah di reorder, atau sebaliknya memiliki loyalitas tinggi meskipun volume ordernya tidak terlalu besar.
 
 ### 🕐 Time Insights
 - **Jam 10:00–14:00** adalah peak order hour — waktu ideal untuk push notifikasi & promosi flash sale
@@ -915,6 +917,6 @@ Departemen Informatika · 2024
 
 <br>
 
-*Built with ❤️ using Apache Spark, ClickHouse, Airflow, and Metabase*
+*Bismillah Admin Lab Manajemen Cerdas Informasi <3*
 
 </div>

@@ -146,7 +146,7 @@ SELECT
     (total_orders - reorder_count) AS new_buyer_orders
 FROM analytics.product_analytics
 WHERE reorder_rate < 0.3
-  AND total_orders >= 4 -- 4 kita anggap besar, demi tercipta top 5
+  AND total_orders >= 2 -- 2 kita anggap besar, demi tercipta top 5
 ORDER BY new_buyer_orders DESC
 LIMIT 5;
 
