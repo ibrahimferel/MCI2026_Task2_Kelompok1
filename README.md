@@ -15,7 +15,7 @@
 
 ## Table of Contents
 
-1. [Kelompok 1](#-team)
+1. [Team](#-team)
 2. [Pipeline Architecture](#-pipeline-architecture)
 3. [Fetch API & Data Ingestion](#-fetch-api--data-ingestion)
 4. [Dataset Explanation & EDA](#-dataset-explanation--eda)
@@ -30,7 +30,7 @@
 
 ---
 
-## Kelompok 1
+## Team
 
 <table align="center">
     <td align="center" width="320">
@@ -52,7 +52,7 @@
 
 ## Pipeline Architecture
 
-Pipeline ini mengikuti arsitektur **ELT (Extract -> Load -> Transform)** berbasis Big Data dengan orkestrasi penuh menggunakan Apache Airflow.
+This pipeline follows an **ELT (Extract → Load → Transform)** architecture based on Big Data principles, with full orchestration using Apache Airflow.
 
 ![alt text](asset_documentation/image.png)
 
@@ -60,16 +60,16 @@ Pipeline ini mengikuti arsitektur **ELT (Extract -> Load -> Transform)** berbasi
 
 | Step | Script | Output |
 |------|--------|--------|
-| Fetch | `fetch_task2_stream.py` | `.parquet` files di Data Lake |
-| Process | `process_task2_spark.py` | 4 tabel di ClickHouse |
-| Visualize | Metabase | Dashboard analytics |
-| Orchestrator | Airflow DAG | Schedule & monitor semua step |
+| Fetch | `fetch_task2_stream.py` | `.parquet` files in the Data Lake |
+| Process | `process_task2_spark.py` | 4 tables in ClickHouse |
+| Visualize | Metabase | Analytics dashboard |
+| Orchestrator | Airflow DAG | Schedules & monitors all steps |
 
 ---
 
 ## Fetch API & Data Ingestion
 
-Script `fetch_task2_stream.py` bertugas mengambil data order dari sumber (Instacart-style dataset) dan menyimpannya ke Data Lake dalam format **Parquet**.
+The `fetch_task2_stream.py` script is responsible for retrieving order data from the source (an Instacart-style dataset) and storing it in the Data Lake in **Parquet** format.
 
 ### Workflow
 
@@ -91,29 +91,29 @@ Add Ingestion Timestamp
 Save as Parquet
 ```
 
-### Langkah Kerja
+### Steps
 
-1. **Mengambil data dari Orders API**
+1. **Fetching data from the Orders API**
 
-   Script melakukan HTTP GET request ke endpoint:
+   The script sends an HTTP GET request to the following endpoint:
 
    ```text
    http://96.9.212.102:8000/orders
    ```
 
-   untuk memperoleh dataset transaksi pesanan.
+   to retrieve the order transaction dataset.
 
-2. **Parsing JSON Response**
+2. **Parsing the JSON Response**
 
-   Response API dikonversi menjadi Python dictionary menggunakan:
+   The API response is converted into a Python dictionary using:
 
    ```python
    response.json()
    ```
 
-   Dataset memiliki struktur **nested JSON**, di mana setiap order menyimpan metadata transaksi dan daftar produk di dalam key `products`.
+   The dataset has a **nested JSON** structure, where each order contains transaction metadata and a list of products under the `products` key.
 
-   Contoh struktur data:
+   Example data structure:
 
    ```json
    {
@@ -128,13 +128,13 @@ Save as Parquet
    }
    ```
 
-3. **Feature Extraction dari Nested JSON**
+3. **Feature Extraction from Nested JSON**
 
-   Karena dataset bersifat nested, pipeline melakukan ekstraksi fitur dari dua level data:
+   Since the dataset is nested, the pipeline extracts features from two levels of data:
 
    **A. Order-level features**
 
-   Metadata utama transaksi yang diambil dari objek order:
+   Main transaction metadata extracted from the order object:
 
    - `order_id`
    - `user_id`
@@ -145,7 +145,7 @@ Save as Parquet
 
    **B. Product-level features**
 
-   Informasi produk yang diambil dari list `products`:
+   Product information extracted from the `products` list:
 
    - `product_id`
    - `product_name`
@@ -154,13 +154,13 @@ Save as Parquet
    - `add_to_cart_order`
    - `reordered`
 
-4. **Flatten Nested Structure**
+4. **Flattening the Nested Structure**
 
-   Karena satu order dapat memiliki banyak produk, dataset diubah dari bentuk nested menjadi bentuk tabular.
+   Since a single order can contain many products, the dataset is transformed from nested form into tabular form.
 
-   Contoh:
+   Example:
 
-   Sebelum flattening:
+   Before flattening:
 
    ```text
    Order 1
@@ -170,44 +170,44 @@ Save as Parquet
          |-- Bread
    ```
 
-   Setelah flattening:
+   After flattening:
 
    | order_id | product_name |
-   |----------|---------------|
-   | 1 | Banana |
-   | 1 | Milk |
-   | 1 | Bread |
+   |----------|--------------|
+   | 1        | Banana       |
+   | 1        | Milk         |
+   | 1        | Bread        |
 
-   Proses ini mempermudah analytics menggunakan Spark SQL dan penyimpanan ke warehouse.
+   This transformation simplifies analytics using Spark SQL and storage into the warehouse.
 
-5. **Menambahkan Ingestion Timestamp**
+5. **Adding an Ingestion Timestamp**
 
-   Setiap row diberikan atribut:
+   Each row is assigned an attribute:
 
    ```text
    ingestion_timestamp
    ```
 
-   untuk mencatat waktu data diambil oleh pipeline.
+   to record when the data was retrieved by the pipeline.
 
-6. **Membuat DataFrame**
+6. **Creating the DataFrame**
 
-   Data hasil parsing dan flattening dikonversi menjadi **Pandas DataFrame**.
+   The parsed and flattened data is converted into a **Pandas DataFrame**.
 
-7. **Menyimpan ke Data Lake**
+7. **Saving to the Data Lake**
 
-   Dataset disimpan ke:
+   The dataset is saved to:
 
    ```text
    /opt/airflow/data_lake/task2/
    ```
 
-   menggunakan format **Apache Parquet**.
+   in **Apache Parquet** format.
 
 ### Final Dataset Schema
 
 | Feature |
-|----------|
+|---------|
 | order_id |
 | user_id |
 | order_number |
@@ -224,26 +224,26 @@ Save as Parquet
 
 ### Output
 
-Contoh output file:
+Example output file:
 
 ```text
 orders_20260517_143022.parquet
 ```
 
-Format **Apache Parquet** dipilih karena:
+**Apache Parquet** format was chosen because:
 
-- columnar storage
-- kompresi lebih efisien
-- optimal untuk pemrosesan Spark
-- umum digunakan dalam pipeline Data Engineering
+- Columnar storage
+- More efficient compression
+- Optimal for Spark processing
+- Commonly used in Data Engineering pipelines
 
-### Struktur Output
+### Output Structure
 
-Sebelum pipeline diorkestrasi menggunakan Apache Airflow, setiap tahapan proses diuji terlebih dahulu melalui terminal untuk melakukan validasi fungsi, alur data, dan output yang dihasilkan:
+Before the pipeline was orchestrated using Apache Airflow, each processing stage was tested individually via the terminal to validate functions, data flow, and output:
 
 ![alt text](asset_documentation/image-1.png)
 
-Contoh Output:
+Example Output:
 
 ![alt text](asset_documentation/image-2.png)
 
@@ -253,31 +253,31 @@ Contoh Output:
 
 ### Dataset Overview
 
-Dataset merupakan data transaksi e-commerce / grocery (Instacart-style) yang merekam perilaku pembelian user secara detail.
+The dataset contains e-commerce / grocery transaction data (Instacart-style) that records user purchasing behavior in detail.
 
-### Visualisasi Struktur Nested JSON Dataset
+### Nested JSON Dataset Structure Visualization
 
 ![alt text](asset_documentation/image-3.png)
 
 ### Schema
 
-| Kolom | Tipe | Deskripsi |
-|-------|------|-----------|
-| `order_id` | UInt32 | ID unik setiap order |
-| `user_id` | UInt32 | ID user yang melakukan order |
-| `order_number` | UInt32 | Urutan order ke-berapa dari user tersebut |
-| `order_dow` | UInt8 | Hari dalam seminggu (0=Sunday, 6=Saturday) |
-| `order_hour_of_day` | UInt8 | Jam pemesanan (0-23) |
-| `days_since_prior_order` | Nullable(UInt16) | Jeda hari sejak order sebelumnya (NULL = order pertama) |
-| `product_id` | UInt32 | ID produk |
-| `product_name` | String | Nama produk |
-| `department` | String | Departemen produk (produce, dairy, etc.) |
-| `aisle` | String | Lorong/kategori lebih spesifik |
-| `add_to_cart_order` | UInt8 | Urutan produk ditambahkan ke keranjang |
-| `reordered` | UInt8 | 1 = pernah dibeli sebelumnya, 0 = pertama kali |
-| `ingestion_timestamp` | String | Waktu data dimasukkan ke sistem |
+| Column | Type | Description |
+|--------|------|-------------|
+| `order_id` | UInt32 | Unique ID for each order |
+| `user_id` | UInt32 | ID of the user who placed the order |
+| `order_number` | UInt32 | Sequential number of the order for that user |
+| `order_dow` | UInt8 | Day of the week (0=Sunday, 6=Saturday) |
+| `order_hour_of_day` | UInt8 | Hour of order placement (0–23) |
+| `days_since_prior_order` | Nullable(UInt16) | Days elapsed since the previous order (NULL = first order) |
+| `product_id` | UInt32 | Product ID |
+| `product_name` | String | Product name |
+| `department` | String | Product department (produce, dairy, etc.) |
+| `aisle` | String | More specific product subcategory / aisle |
+| `add_to_cart_order` | UInt8 | Order in which the product was added to the cart |
+| `reordered` | UInt8 | 1 = previously purchased, 0 = first time |
+| `ingestion_timestamp` | String | Timestamp when data was ingested into the system |
 
-### Preview Isi File Parquet
+### Parquet File Preview
 
 ![alt text](asset_documentation/image-4.png)
 
@@ -285,7 +285,7 @@ Dataset merupakan data transaksi e-commerce / grocery (Instacart-style) yang mer
 
 ## Spark Processing
 
-Script `process_task2_spark.py` menggunakan Apache Spark untuk memproses seluruh file Parquet di Data Lake secara paralel dan menghasilkan 4 analytics table.
+The `process_task2_spark.py` script uses Apache Spark to process all Parquet files in the Data Lake in parallel and produce 4 analytics tables.
 
 #### Workflow
 
@@ -305,142 +305,142 @@ Load to ClickHouse Warehouse
 Cleanup Processed Parquet Files
 ```
 
-### 1. Membaca Data dari Data Lake
+### 1. Reading Data from the Data Lake
 
-Pipeline membaca seluruh file parquet yang tersedia pada folder:
+The pipeline reads all available parquet files from:
 
 ```text
 /opt/airflow/data_lake/task2/
 ```
 
-menggunakan Apache Spark.
+using Apache Spark:
 
 ```python
 spark.read.parquet(...)
 ```
 
-Karena Spark mendukung pembacaan multi-file secara langsung, seluruh batch data dapat diproses sekaligus.
+Since Spark natively supports reading multiple files at once, the entire batch of data can be processed in one pass.
 
-Dataset kemudian di-cache menggunakan:
+The dataset is then cached using:
 
 ```python
 df_raw.cache()
 ```
 
-untuk meningkatkan performa pada proses analytics yang menggunakan dataframe yang sama berulang kali.
+to improve performance for analytics processes that reference the same dataframe multiple times.
 
 ### 2. Product Analytics Processing
 
-Pipeline melakukan agregasi analytics berdasarkan:
+The pipeline performs aggregated analytics grouped by:
 
 - `product_name`
 - `department`
 
-Metrik yang dihitung:
+Computed metrics:
 
 | Metric | Description |
-|---------|-------------|
-| total_orders | Total jumlah transaksi produk |
-| reorder_count | Total produk yang di-reorder |
-| reorder_rate | Persentase reorder terhadap total transaksi |
+|--------|-------------|
+| total_orders | Total number of product transactions |
+| reorder_count | Total number of reordered products |
+| reorder_rate | Percentage of reorders relative to total transactions |
 
-Formula reorder rate:
+Reorder rate formula:
 
 ```text
 reorder_rate = reorder_count / total_orders
 ```
 
-Contoh insight yang dapat digali:
+Example insights that can be derived:
 
-- Produk paling populer.
-- Produk dengan tingkat pembelian ulang tertinggi.
-- Performa produk per departemen.
+- Most popular products.
+- Products with the highest repurchase rate.
+- Product performance per department.
 
 ### 3. Hourly Analytics Processing
 
-Pipeline melakukan grouping berdasarkan:
+The pipeline groups data by:
 
 ```text
 order_hour_of_day
 ```
 
-untuk memperoleh distribusi jumlah transaksi per jam.
+to obtain the distribution of transaction counts per hour.
 
-Metrik:
+Metrics:
 
 - `total_orders`
 
-Insight yang dapat diperoleh:
+Insights that can be obtained:
 
-- Jam tersibuk pelanggan melakukan pemesanan.
-- Pola aktivitas pembelian harian.
+- The busiest hours for customer orders.
+- Daily purchasing activity patterns.
 
 ### 4. Department Analytics Processing
 
-Analytics departemen dihitung melalui grouping:
+Department analytics are computed by grouping on:
 
 ```text
 department
 ```
 
-untuk memperoleh total volume transaksi tiap departemen.
+to obtain total transaction volume per department.
 
-Insight:
+Insights:
 
-- Departemen dengan aktivitas pembelian tertinggi.
-- Distribusi penjualan antar kategori produk.
+- Departments with the highest purchasing activity.
+- Sales distribution across product categories.
 
 ### 5. ClickHouse Data Warehouse Initialization
 
-Pipeline melakukan koneksi ke ClickHouse Warehouse.
+The pipeline establishes a connection to the ClickHouse Warehouse.
 
-Database analytics dibuat secara otomatis apabila belum tersedia:
+The analytics database is created automatically if it does not already exist:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS analytics
 ```
 
-Kemudian dibuat empat tabel warehouse:
+Four warehouse tables are then created:
 
 | Table | Function |
 |-------|----------|
-| raw_orders | Menyimpan raw transactional dataset |
-| product_analytics | Menyimpan analytics produk |
-| hourly_analytics | Menyimpan analytics per jam |
-| department_analytics | Menyimpan analytics per departemen |
+| raw_orders | Stores the raw transactional dataset |
+| product_analytics | Stores product analytics |
+| hourly_analytics | Stores per-hour analytics |
+| department_analytics | Stores per-department analytics |
 
 ### 6. Data Type Validation & Safe Casting
 
-Sebelum proses insert ke ClickHouse, pipeline melakukan validasi tipe data.
+Before inserting into ClickHouse, the pipeline validates data types.
 
-Beberapa helper function digunakan:
+Several helper functions are used:
 
 #### safe_int()
 
-Digunakan untuk:
+Used to:
 
-- menangani nilai NULL
-- menghindari type mismatch
-- memastikan seluruh numeric column menjadi Python native integer.
+- Handle NULL values
+- Avoid type mismatches
+- Ensure all numeric columns become Python native integers.
 
 #### safe_str()
 
-Digunakan untuk:
+Used to:
 
-- menangani nilai kosong
-- memastikan seluruh string column valid sebelum insert.
+- Handle empty values
+- Ensure all string columns are valid before insertion.
 
-Tahap ini penting karena ClickHouse memiliki validasi tipe data yang ketat.
+This step is important because ClickHouse enforces strict data type validation.
 
-### 7. Loading Data ke Warehouse
+### 7. Loading Data to the Warehouse
 
-Pipeline menggunakan mode:
+The pipeline uses:
 
 ```text
 TRUNCATE + INSERT
 ```
 
-agar dashboard selalu menampilkan data terbaru.
+mode to ensure the dashboard always displays the latest data.
 
 Flow:
 
@@ -452,22 +452,21 @@ Prepare tuples
 INSERT INTO ClickHouse
 ```
 
-Setiap analytics table di-overwrite menggunakan batch terbaru.
+Each analytics table is overwritten with the latest batch.
 
-### 8. Cleanup Data Lake
+### 8. Data Lake Cleanup
 
-Setelah proses warehouse selesai, file parquet lama dihapus otomatis:
+After the warehouse loading is complete, old parquet files are automatically deleted:
 
 ```text
 /opt/airflow/data_lake/task2/*.parquet
 ```
 
-Tujuan cleanup:
+Reasons for cleanup:
 
-- mencegah penumpukan batch lama
-- menjaga storage tetap efisien
-- menghindari duplicate processing.
-
+- Prevents accumulation of old batches
+- Keeps storage efficient
+- Avoids duplicate processing.
 
 ### Output Warehouse Tables
 
@@ -477,15 +476,15 @@ Raw transactional dataset.
 
 #### 2. analytics.product_analytics
 
-Analytics produk dan reorder behavior.
+Product and reorder behavior analytics.
 
 #### 3. analytics.hourly_analytics
 
-Analytics distribusi transaksi per jam.
+Transaction distribution analytics per hour.
 
 #### 4. analytics.department_analytics
 
-Analytics volume transaksi per departemen.
+Transaction volume analytics per department.
 
 ---
 
@@ -502,7 +501,7 @@ POSTGRES_VERSION=13
 METABASE_VERSION=latest
 ```
 
-### docker-compose.yml (ringkasan)
+### docker-compose.yml (summary)
 
 ```yaml
 version: '3.8'
@@ -551,7 +550,7 @@ services:
       MB_DB_TYPE: h2
 ```
 
-### Dockerfile (Airflow custom)
+### Dockerfile (Custom Airflow)
 
 ```dockerfile
 FROM apache/airflow:2.8.1-python3.11
@@ -573,9 +572,9 @@ RUN pip install --no-cache-dir \
 
 ## Proof: ClickHouse & Airflow
 
-### Airflow: DAG Berhasil
+### Airflow: DAG Successful
 
-Pipeline berjalan terjadwal setiap jam via Airflow DAG `task2_orders_pipeline`.
+The pipeline runs on an hourly schedule via the Airflow DAG `task2_orders_pipeline`.
 
 ![alt text](asset_documentation/image-5.png)
 ![alt text](asset_documentation/image-6.png)
@@ -583,7 +582,7 @@ Pipeline berjalan terjadwal setiap jam via Airflow DAG `task2_orders_pipeline`.
 ### ClickHouse: Data Verified
 
 ```sql
--- Verifikasi data masuk
+-- Verify data ingestion
 SELECT table, formatReadableQuantity(sum(rows)) AS total_rows
 FROM system.parts
 WHERE database = 'analytics' AND active
@@ -607,11 +606,11 @@ GROUP BY table;
 
 ## Data Visualization
 
-Semua visualisasi dibangun di Metabase menggunakan query langsung ke ClickHouse.
+All visualizations are built in Metabase using direct queries to ClickHouse.
 
 ### Table: `product_analytics`
 
-| Query | Judul | Chart |
+| Query | Title | Chart |
 |-------|-------|-------|
 | A1 | Top 10 Most Ordered Products | Row |
 | A2 | Top 10 Products by Reorder Rate | Row |
@@ -626,7 +625,7 @@ Semua visualisasi dibangun di Metabase menggunakan query langsung ke ClickHouse.
 
 ### Table: `hourly_analytics`
 
-| Query | Judul | Chart |
+| Query | Title | Chart |
 |-------|-------|-------|
 | B1 | Distribution Orders per Hour | Pie |
 | B2 | Time Segmentation | Bar |
@@ -635,7 +634,7 @@ Semua visualisasi dibangun di Metabase menggunakan query langsung ke ClickHouse.
 
 ### Table: `department_analytics`
 
-| Query | Judul | Chart |
+| Query | Title | Chart |
 |-------|-------|-------|
 | C1 | Department Contribution to Total Transactions | Donut |
 | C2 | Concentration Risk Analysis | Scalar |
@@ -645,7 +644,7 @@ Semua visualisasi dibangun di Metabase menggunakan query langsung ke ClickHouse.
 
 ### Table: `raw_orders`
 
-| Query | Judul | Chart |
+| Query | Title | Chart |
 |-------|-------|-------|
 | D1 | All Transaction Count | Scalar |
 | D2 | Order Distribution per Day of the Week | Combo |
@@ -663,11 +662,11 @@ Semua visualisasi dibangun di Metabase menggunakan query langsung ke ClickHouse.
 
 ## Dashboard Overview
 
-Dashboard Metabase dibagi menjadi **4 section utama:**
+The Metabase dashboard is divided into **4 main sections:**
 
 ### <u>1. Product Performance</u>
 
-Menyajikan analisis performa produk melalui jumlah pemesanan, perilaku reorder pelanggan, dan distribusi metrik produk. Visualisasi ini membantu memahami produk mana yang paling sering dibeli, paling konsisten di-reorder, dan paling berpengaruh dalam keseluruhan dataset.
+Presents product performance analysis through order volumes, customer reorder behavior, and the distribution of product metrics. These visualizations help identify which products are purchased most frequently, which are reordered most consistently, and which have the greatest influence across the entire dataset.
 
 ![alt text](asset_documentation/image-8.png)
 ![alt text](asset_documentation/image-9.png)
@@ -675,103 +674,103 @@ Menyajikan analisis performa produk melalui jumlah pemesanan, perilaku reorder p
 
 #### <u>A1. Top 10 Most Ordered Products (Row Chart)</u>
 
-Menampilkan 10 produk dengan jumlah pemesanan tertinggi untuk mengidentifikasi produk paling populer dan paling sering muncul dalam transaksi. Berdasarkan hasil analisis pada dataset, daftar produk dengan volume order tertinggi didominasi oleh produk dari departemen produce. Selain itu, jumlah order pada kelompok top 10 products berada pada kisaran sekitar 7-17 transaksi, menunjukkan produk-produk dengan tingkat permintaan relatif lebih tinggi dibandingkan produk lainnya dalam dataset.
+Displays the 10 products with the highest number of orders to identify the most popular products and those appearing most frequently in transactions. Based on the dataset analysis, the products with the highest order volumes are dominated by items from the produce department. Additionally, order counts within the top 10 range from approximately 7 to 17 transactions, indicating products with relatively higher demand compared to the rest of the dataset.
 
 #### <u>A2. Top 10 Products by Reorder Rate (Row Chart)</u>
 
-Menggali produk dengan tingkat pembelian ulang tertinggi sebagai indikator loyalitas atau kecenderungan pelanggan membeli kembali produk tertentu. Dari hasil analisis, terlihat adanya perbedaan komposisi ketika peringkat produk ditentukan berdasarkan reorder rate dibandingkan jumlah order. Pada kategori ini, muncul produk dari departemen beverages, yaitu Lime Sparkling Water, sementara sebagian besar produk lainnya masih relatif serupa dengan daftar produk berperforma tinggi berdasarkan total order. Hal ini menunjukkan bahwa popularitas produk dan tingkat loyalitas pelanggan tidak selalu menghasilkan peringkat yang identik.
+Explores products with the highest repurchase rates as an indicator of customer loyalty or tendency to repeatedly buy certain products. The results reveal a different composition when products are ranked by reorder rate versus total order count. In this category, a product from the beverages department — Lime Sparkling Water — appears, while most other products remain similar to those in the high-order-volume list. This shows that product popularity and customer loyalty do not always produce identical rankings.
 
 #### <u>A3. Products with Lowest Reorder Rate (Row Chart)</u>
 
-Menunjukkan produk dengan tingkat reorder terendah untuk membantu mengidentifikasi produk yang jarang dibeli ulang atau memiliki tingkat loyalitas pelanggan yang rendah. Berdasarkan hasil analisis, daftar produk dengan reorder rate terendah masih cukup didominasi oleh produk dari departemen produce. Namun, muncul pula beberapa produk dari departemen lain yang sebelumnya tidak menonjol pada analisis sebelumnya, seperti canned goods, frozen, dan pantry. Temuan ini mengindikasikan bahwa produk pada departemen tersebut cenderung memiliki tingkat pembelian ulang yang lebih rendah, sehingga pelanggan relatif lebih jarang melakukan pembelian kembali terhadap produk-produk tersebut.
+Shows products with the lowest reorder rates to help identify items that are rarely repurchased or have low customer loyalty. The results indicate that the list of products with the lowest reorder rates is still largely dominated by produce items. However, products from other departments that were not prominent in earlier analyses also appear here, such as canned goods, frozen, and pantry. This suggests that products in those departments tend to have lower repurchase rates, meaning customers are less likely to buy them again.
 
 #### <u>A4. Unique Products & Total Orders per Department (Bar Chart)</u>
 
-Menganalisis jumlah variasi produk dan total aktivitas pemesanan pada setiap departemen untuk melihat skala serta keragaman katalog produk. Berdasarkan visualisasi yang diperoleh, departemen dengan jumlah produk unik (total products) sekaligus aktivitas pemesanan tertinggi didominasi oleh produce, diikuti oleh dairy eggs dan snacks. Hal ini menunjukkan bahwa ketiga departemen tersebut memiliki keragaman produk yang relatif besar serta tingkat permintaan pelanggan yang cukup tinggi dibandingkan departemen lainnya.
+Analyzes the number of unique products and total order activity per department to assess the scale and diversity of each product catalog. The departments with the highest number of unique products and the highest order activity are dominated by produce, followed by dairy eggs and snacks. This indicates that these three departments have relatively broad product variety and consistently high customer demand compared to others.
 
 #### <u>A5. Average Reorder Rate per Department (Bar Chart)</u>
 
-Membandingkan rata-rata tingkat reorder antar departemen untuk memahami kategori produk mana yang memiliki pola loyalitas pelanggan yang lebih tinggi. Berdasarkan hasil analisis, departemen bulk menunjukkan nilai rata-rata reorder rate tertinggi dibandingkan departemen lainnya. Namun, jumlah total orders pada kategori tersebut relatif sangat rendah, sehingga insight yang diperoleh kurang representatif untuk menggambarkan perilaku pelanggan secara umum. Jika mempertimbangkan keseimbangan antara tingkat reorder dan volume transaksi, departemen produce, dairy eggs, dan snacks menjadi kategori yang terlihat paling kuat dan konsisten dalam menunjukkan kombinasi antara aktivitas pemesanan tinggi dan loyalitas pelanggan yang baik.
+Compares the average reorder rate across departments to understand which product categories exhibit stronger customer loyalty patterns. The bulk department shows the highest average reorder rate, but its total order count is very low, making the insight less representative of general customer behavior. When balancing reorder rate against transaction volume, produce, dairy eggs, and snacks emerge as the strongest and most consistent departments in terms of both high order activity and good customer loyalty.
 
 #### <u>A6. Top 5 Products per Department (Table)</u>
 
-Menampilkan lima produk terbaik pada setiap departemen berdasarkan performa order sehingga dapat terlihat produk unggulan pada masing-masing kategori. Melalui visualisasi ini, kita dapat membandingkan produk-produk teratas dari setiap departemen berdasarkan kombinasi total orders dan reorder rate. Hasil analisis menunjukkan bahwa beberapa produk memiliki performa yang menonjol di kategorinya masing-masing, dengan Lime Sparkling Water menjadi salah satu produk yang berada pada posisi teratas berdasarkan keseimbangan antara volume pemesanan dan tingkat pembelian ulang pelanggan.
+Displays the top five products in each department based on order performance, revealing standout products within each category. This visualization allows comparison of the top products from every department based on a combination of total orders and reorder rate. The results show that several products have outstanding performance in their respective categories, with Lime Sparkling Water standing out as one of the top-ranked products based on the balance between order volume and customer repurchase rate.
 
 #### <u>A7. Evergreen Products: High Orders & High Loyalty (Scatter Chart)</u>
 
-Memetakan hubungan antara jumlah order dan reorder rate untuk mengidentifikasi produk yang memiliki permintaan tinggi sekaligus loyalitas pelanggan yang kuat. Berdasarkan pola yang terlihat dari analisis-analisis sebelumnya, produk dari departemen produce memang menunjukkan performa yang paling konsisten, baik dari sisi volume pemesanan maupun tingkat pembelian ulang pelanggan. Oleh karena itu, cukup wajar apabila posisi teratas pada visualisasi ini didominasi oleh produk-produk dari departemen produce, seperti Organic Strawberries, Banana, dan beberapa produk sejenis lainnya yang memiliki kombinasi kuat antara popularitas dan loyalitas pelanggan.
+Maps the relationship between order count and reorder rate to identify products that have both high demand and strong customer loyalty. Based on patterns observed in earlier analyses, produce products consistently show the strongest performance in both order volume and customer repurchase rates. It is therefore expected that the top positions in this visualization are dominated by produce items such as Organic Strawberries, Banana, and similar products that combine high popularity with strong loyalty.
 
 #### <u>A8. Reorder Rate Distribution by Bucket (Pie Chart)</u>
 
-Melalui visualisasi pie chart reorder rate distribution, dilakukan pengelompokan tingkat reorder rate ke dalam beberapa kategori, misalnya Very Low, Low, Medium, High, dan Very High berdasarkan rentang nilai tertentu (contohnya 0.2, 0.5, 0.8, dan seterusnya). Dari hasil analisis, terlihat bahwa dataset ini memiliki cukup banyak produk dengan tingkat reorder rate tinggi, bahkan jumlahnya mencapai hampir lebih dari separuh distribusi. Menariknya, kategori dengan reorder rate sangat rendah (Very Low) juga menempati proporsi yang cukup besar. Hal ini menunjukkan adanya pola distribusi yang cukup terpolarisasi, dimana sebagian produk memiliki loyalitas pelanggan yang kuat, sementara sebagian lainnya cenderung jarang mengalami pembelian ulang.
+Through this pie chart, reorder rates are grouped into several categories — for example, Very Low, Low, Medium, High, and Very High — based on defined value ranges (e.g., 0.2, 0.5, 0.8, etc.). The analysis reveals that the dataset contains a large proportion of products with high reorder rates, accounting for nearly more than half of the distribution. Notably, the Very Low reorder rate category also holds a significant share. This indicates a polarized distribution pattern, where some products enjoy strong customer loyalty while others are rarely repurchased.
 
 #### <u>A9. Total Orders vs Reorders by Department (Combo Chart)</u>
 
-Membandingkan total orders dan total reorders pada setiap departemen untuk melihat keseimbangan antara volume penjualan dan tingkat pembelian ulang pelanggan. Berdasarkan combo chart, kembali terlihat bahwa departemen produce memiliki performa yang paling seimbang dan konsisten. Departemen ini menunjukkan jumlah order yang tinggi sekaligus diikuti oleh total reorder yang juga besar, menandakan bahwa produk-produk di kategori tersebut tidak hanya sering dibeli, tetapi juga cukup berhasil mendorong pelanggan untuk melakukan pembelian ulang. Di sisi lain, beberapa departemen lain terlihat memiliki perbedaan yang cukup signifikan antara total orders dan total reorders, yang dapat mengindikasikan adanya ketimpangan antara tingkat popularitas produk dan loyalitas pelanggan.
+Compares total orders and total reorders per department to assess the balance between sales volume and customer repurchase behavior. The combo chart again shows that the produce department delivers the most balanced and consistent performance — it records high total orders and is also followed by a large total reorder count, indicating that its products are not only purchased frequently but are also successful in driving repeat purchases. Some other departments show a more significant gap between total orders and total reorders, which may indicate an imbalance between product popularity and customer loyalty.
 
 #### <u>A10. First-Time Buyer Dominant Products (Row Chart)</u>
 
-Melalui chart ini, kita dapat melihat produk-produk yang cukup sering dibeli pada pembelian awal, namun memiliki kecenderungan rendah untuk dibeli kembali (reorder). Menariknya, pola ini berbeda dengan analisis sebelumnya karena tidak lagi didominasi oleh departemen produce. Beberapa produk yang muncul sebagai contoh antara lain Sour Cream, Organic Zucchini, Peach Preserves, Original Spread, dan Blueberries. Hal ini menunjukkan bahwa meskipun suatu produk mampu menarik pembelian awal pelanggan, belum tentu produk tersebut berhasil mempertahankan minat pelanggan untuk melakukan pembelian ulang.
+This chart highlights products that are frequently purchased on a customer's first order but have a low tendency to be reordered. Notably, this pattern differs from earlier analyses and is no longer dominated by the produce department. Some examples of products that appear here include Sour Cream, Organic Zucchini, Peach Preserves, Original Spread, and Blueberries. This suggests that even if a product successfully attracts an initial purchase, it does not necessarily retain customer interest for repeat buying.
 
 ---
 
 ### <u>2. Hourly & Time Pattern</u>
 
-Menampilkan pola pemesanan sepanjang hari. Line chart B1 menunjukkan kurva order per jam, sementara Area chart B3 memperlihatkan akumulasi order secara kumulatif. Dashboard ini berguna untuk menentukan waktu terbaik untuk push notification, flash sale, atau restocking.
+Displays ordering patterns throughout the day. The line chart B1 shows the order curve per hour, while the area chart B3 shows the cumulative accumulation of orders. This dashboard is useful for determining the best times for push notifications, flash sales, or restocking.
 
 ![alt text](asset_documentation/image-11.png)
 ![alt text](asset_documentation/image-12.png)
 
 #### <u>B1. Distribution Orders per Hour (Pie Chart)</u>
 
-Menampilkan distribusi proporsi order pada setiap jam dalam sehari. Berdasarkan hasil analisis, jam 15 (pukul 15.00) mencatat persentase tertinggi sebesar 12.41%, diikuti oleh jam 17 sebesar 12.31%, dan jam 9 sebesar 11.10%. Hal ini menunjukkan bahwa aktivitas pemesanan pelanggan paling terkonsentrasi pada rentang siang hingga sore hari, dengan total keseluruhan mencapai 1.072 transaksi.
+Displays the proportion of orders placed at each hour of the day. Based on the analysis, hour 15 (3:00 PM) recorded the highest percentage at 12.41%, followed by hour 17 at 12.31%, and hour 9 at 11.10%. This indicates that customer ordering activity is most concentrated in the midday to afternoon range, with a total of 1,072 transactions overall.
 
 #### <u>B2. Time Segmentation (Bar Chart)</u>
 
-Mengelompokkan total order ke dalam empat segmen waktu utama: Afternoon (12-17), Morning (05-11), Evening (18-21), dan Night (22-04). Dari visualisasi ini terlihat bahwa segmen Afternoon mendominasi dengan total order tertinggi mendekati angka 500, diikuti oleh Morning sekitar 400 order. Segmen Evening dan Night memiliki volume yang jauh lebih rendah, mengindikasikan bahwa pelanggan cenderung aktif berbelanja pada siang hingga sore hari.
+Groups total orders into four main time segments: Afternoon (12–17), Morning (05–11), Evening (18–21), and Night (22–04). The Afternoon segment dominates with the highest total orders approaching 500, followed by Morning at around 400 orders. Evening and Night segments have significantly lower volumes, indicating that customers tend to be most active during midday to afternoon hours.
 
 #### <u>B3. Running Total Orders Throughout the Day (Area Chart)</u>
 
-Memvisualisasikan akumulasi kumulatif order sepanjang hari dari jam 0 hingga jam 23. Grafik menunjukkan pertumbuhan yang lambat pada dini hari, mulai meningkat signifikan sekitar jam 7-8, kemudian mengalami percepatan akumulasi pada rentang jam 9-17, dan melambat kembali setelah jam 18. Pola ini memperkuat temuan bahwa mayoritas transaksi terjadi pada periode siang hari.
+Visualizes the cumulative accumulation of orders throughout the day from hour 0 to hour 23. The chart shows slow growth in the early morning hours, a significant increase starting around 7–8 AM, accelerated accumulation between 9 AM and 5 PM, and a slowdown after 6 PM. This pattern reinforces the finding that the majority of transactions occur during daytime hours.
 
 #### <u>B4. Hourly Order Performance vs Daily Average (Sankey Chart)</u>
 
-Mengklasifikasikan setiap jam ke dalam dua kategori: Above Average dan Below Average berdasarkan perbandingan terhadap rata-rata harian. Dari visualisasi ini, jam-jam yang berada di atas rata-rata meliputi jam 8, 9, 10, 12, 14, 15, dan 17, yang semuanya terkonsentrasi pada periode pagi hingga sore. Sebaliknya, jam-jam dini hari (0, 6) serta malam hari (18, 19, 20, 22) berada di bawah rata-rata, menegaskan pola aktivitas pemesanan yang terpusat pada jam produktif siang hari.
+Classifies each hour into two categories: Above Average and Below Average based on comparison against the daily average. From this visualization, hours that fall above the average include 8, 9, 10, 12, 14, 15, and 17 — all concentrated in the morning to afternoon period. Conversely, the early morning hours (0, 6) and evening hours (18, 19, 20, 22) fall below the average, confirming that order activity is centered around productive daytime hours.
 
 ---
 
 ### <u>3. Department Breakdown</u>
 
-Menganalisis kontribusi setiap departemen terhadap total order. Pareto chart memperlihatkan department mana yang menyumbang porsi terbesar dari total transaksi, sangat berguna untuk keputusan alokasi stok dan budget promosi.
+Analyzes the contribution of each department to total orders. The Pareto chart shows which departments account for the largest share of total transactions — highly useful for stock allocation and promotional budget decisions.
 
 ![alt text](asset_documentation/image-13.png)
 ![alt text](asset_documentation/image-14.png)
 
 #### <u>C1. Department Contribution to Total Transactions (Donut Chart)</u>
 
-Menampilkan proporsi kontribusi setiap departemen terhadap total 1.072 transaksi. Departemen produce mendominasi dengan 28.82%, disusul dairy eggs sebesar 15.58%, beverages 9.51%, snacks 8.58%, dan frozen 6.44%. Departemen lainnya masing-masing berkontribusi di bawah 5%, dengan kategori lainnya (Lainnya) mencakup 10.35% dari total transaksi.
+Displays the proportional contribution of each department to the total 1,072 transactions. The produce department dominates at 28.82%, followed by dairy eggs at 15.58%, beverages at 9.51%, snacks at 8.58%, and frozen at 6.44%. Other departments each contribute less than 5%, with the remaining group (Others) accounting for 10.35% of total transactions.
 
 #### <u>C2. Concentration Risk Analysis (Scalar)</u>
 
-Menampilkan metrik risiko konsentrasi untuk mengukur sejauh mana transaksi terkonsentrasi pada sejumlah kecil departemen. Dari hasil analisis, terdapat 20 departemen secara total, dengan 5 departemen dikategorikan sebagai high volume. Lima departemen tersebut menyumbang 68.94% dari keseluruhan transaksi, mengindikasikan adanya konsentrasi yang cukup tinggi dan potensi risiko apabila departemen-departemen utama tersebut mengalami gangguan.
+Displays a concentration risk metric to measure how much transaction volume is concentrated in a small number of departments. The analysis shows a total of 20 departments, with 5 classified as high volume. These five departments account for 68.94% of all transactions, indicating a relatively high concentration and a potential risk if any of these key departments experiences disruption.
 
 #### <u>C3. Anomaly Detection by Total Orders (Bar Chart)</u>
 
-Mengidentifikasi departemen yang memiliki volume order jauh di atas rata-rata dan dapat dikategorikan sebagai anomali. Dari visualisasi ini, departemen produce terlihat sangat menonjol sebagai anomali dengan total order yang jauh melampaui departemen lainnya. Sementara itu, sebagian besar departemen lain berada dalam rentang normal yang relatif seragam, menandakan dominasi produce yang sangat signifikan dibandingkan kategori lainnya.
+Identifies departments with order volumes far above the average that can be classified as anomalies. The produce department stands out significantly as an anomaly, with total orders far exceeding all other departments. Most other departments fall within a relatively uniform normal range, highlighting the extraordinary dominance of produce compared to other categories.
 
 #### <u>C4. Department with Total Orders Above and Below Average (Sankey Chart)</u>
 
-Mengklasifikasikan seluruh departemen ke dalam dua kelompok berdasarkan perbandingan terhadap rata-rata total order. Departemen yang berada di atas rata-rata meliputi produce, dairy eggs, beverages, dan snacks, sementara departemen lainnya berada di bawah rata-rata. Visualisasi Sankey ini memudahkan identifikasi departemen mana yang perlu mendapat prioritas perhatian dalam strategi pengadaan dan promosi.
+Classifies all departments into two groups based on comparison against the average total order count. Departments above the average include produce, dairy eggs, beverages, and snacks, while all others fall below the average. This Sankey visualization makes it easy to identify which departments should receive priority attention in procurement and promotional strategies.
 
 #### <u>C5. Total Orders Gap to Next Department (Combo Chart)</u>
 
-Menampilkan selisih (gap) jumlah order antara satu departemen dengan departemen berikutnya dalam urutan peringkat. Berdasarkan visualisasi, gap terbesar terjadi antara produce dan dairy eggs, menunjukkan dominasi luar biasa dari departemen produce. Gap kemudian mengecil secara bertahap seiring turunnya peringkat departemen, membentuk pola kurva yang menurun tajam di awal dan landai di bagian akhir.
+Displays the gap in order count between each department and the next in the ranked list. Based on the visualization, the largest gap occurs between produce and dairy eggs, highlighting produce's extraordinary dominance. The gap then narrows gradually as the department ranking decreases, forming a curve that drops steeply at the top and flattens toward the bottom.
 
 ---
 
 ### <u>4. Raw Transaction Summary</u>
 
-Overview keseluruhan data transaksi termasuk jumlah order unik, user aktif, produk unik, distribusi per hari dalam seminggu, dan berbagai analisis perilaku pelanggan secara mendalam.
+An overview of all transaction data, including unique order counts, active users, unique products, day-of-week distribution, and various in-depth customer behavior analyses.
 
 ![alt text](asset_documentation/image-15.png)
 ![alt text](asset_documentation/image-16.png)
@@ -779,94 +778,94 @@ Overview keseluruhan data transaksi termasuk jumlah order unik, user aktif, prod
 
 #### <u>D1. All Transaction Count (Scalar)</u>
 
-Menampilkan ringkasan statistik keseluruhan dataset. Total baris data mencapai 1.084, dengan 100 unique orders dan 100 unique users, serta 825 unique products. Rata-rata item per order adalah 10.84, dengan maksimum 50 item dalam satu order dan minimum 1 item, memberikan gambaran umum mengenai skala dan karakteristik dataset ini.
+Displays a summary of overall dataset statistics. Total rows reach 1,084, with 100 unique orders and 100 unique users, and 825 unique products. The average number of items per order is 10.84, with a maximum of 50 items in a single order and a minimum of 1, providing a general overview of the scale and characteristics of this dataset.
 
 #### <u>D2. Order Distribution per Day of the Week (Combo Chart)</u>
 
-Menampilkan distribusi total order berdasarkan hari dalam seminggu. Dari visualisasi ini, Wednesday dan Monday mencatat volume order tertinggi, sementara Sunday dan Friday memiliki volume yang lebih rendah. Pola ini mengindikasikan bahwa pelanggan cenderung melakukan pembelian groceries pada hari-hari awal dan pertengahan minggu.
+Displays the distribution of total orders by day of the week. Wednesday and Monday record the highest order volumes, while Sunday and Friday have lower volumes. This pattern suggests that customers tend to purchase groceries at the beginning and middle of the week.
 
 #### <u>D3. Top 10 Most Active User by Order Count (Bar Chart)</u>
 
-Mengidentifikasi 10 pengguna paling aktif berdasarkan jumlah order, total item yang dibeli, serta rata-rata jarak hari antar order. Dari visualisasi ini, user 188.196 merupakan pengguna paling aktif berdasarkan jumlah order, sementara user 55.276 menunjukkan rata-rata jarak antar order yang paling panjang dengan total item terbanyak, mengindikasikan pola belanja dengan keranjang besar namun frekuensi lebih rendah.
+Identifies the 10 most active users based on number of orders, total items purchased, and average days between orders. User 188,196 is the most active user by order count, while user 55,276 shows the longest average interval between orders with the most total items — indicating a shopping pattern of large baskets but lower frequency.
 
 #### <u>D4. Product Reorder Distribution (Area Chart)</u>
 
-Menampilkan distribusi reorder rate, jumlah item yang di-reorder, dan total item per departemen. Departemen produce menunjukkan puncak yang sangat dominan pada ketiga metrik tersebut, diikuti lonjakan signifikan pada departemen meat seafood. Visualisasi ini membantu mengidentifikasi departemen mana yang memiliki loyalitas pelanggan kuat sekaligus volume transaksi tinggi.
+Displays the distribution of reorder rate, the number of reordered items, and total items per department. The produce department shows a very dominant peak across all three metrics, followed by a significant spike in the meat seafood department. This visualization helps identify which departments have strong customer loyalty alongside high transaction volumes.
 
 #### <u>D5. Top 10 Most Popular Aisle (Donut Chart)</u>
 
-Menampilkan 10 lorong (aisle) produk yang paling sering muncul dalam transaksi. Fresh fruits mendominasi dengan 17.06%, diikuti fresh vegetables sebesar 16.05%, packaged vegetables sebesar 11.71%, dan yogurt sebesar 11.04%. Secara keseluruhan, aisle yang berkaitan dengan produk segar dan dairy mendominasi preferensi belanja pelanggan dari total 299 transaksi yang dianalisis.
+Displays the 10 aisles most frequently appearing in transactions. Fresh fruits dominate at 17.06%, followed by fresh vegetables at 16.05%, packaged vegetables at 11.71%, and yogurt at 11.04%. Overall, aisles related to fresh products and dairy dominate customer shopping preferences out of the 299 total transactions analyzed.
 
 #### <u>D6. The Most Consistent Users Reorder (Bar Chart)</u>
 
-Mengidentifikasi pengguna yang paling konsisten melakukan reorder berdasarkan kombinasi total items, reorder rate, dan unique products. Dari visualisasi ini, terlihat bahwa pengguna dengan reorder rate tinggi tidak selalu merupakan pengguna dengan total item terbanyak, menunjukkan adanya variasi dalam pola loyalitas pelanggan di antara pengguna-pengguna paling aktif.
+Identifies users who most consistently reorder based on a combination of total items, reorder rate, and unique products. The results show that users with a high reorder rate are not always the users with the most total items, indicating variation in loyalty patterns among the most active users.
 
 #### <u>D7. Department Contribution to Total Transactions (Bar Chart)</u>
 
-Menampilkan kontribusi setiap departemen terhadap total transaksi dalam format bar chart yang diurutkan dari tertinggi ke terendah. Produce kembali mendominasi dengan nilai jauh di atas departemen lainnya, diikuti dairy eggs dan snacks. Visualisasi ini memberikan perspektif yang lebih mudah dibaca untuk membandingkan volume antar departemen secara langsung.
+Displays each department's contribution to total transactions in a bar chart sorted from highest to lowest. Produce again dominates with values far above all other departments, followed by dairy eggs and snacks. This visualization provides a more readable perspective for directly comparing transaction volume across departments.
 
 #### <u>D8. Customer Shopping Intensity by Time (Table)</u>
 
-Menampilkan intensitas belanja pelanggan berdasarkan periode waktu, mencakup total orders, jumlah active users, dan rata-rata item per order. Dari tabel ini, segmen Afternoon mencatat 44 orders dengan 44 active users dan rata-rata 10.59 item per order. Morning memiliki 29 orders dengan rata-rata 10.66 item, Evening 18 orders dengan rata-rata 8.44 item, dan Night hanya 9 orders namun dengan rata-rata item tertinggi sebesar 17.44, mengindikasikan bahwa pembelanja malam hari cenderung berbelanja dalam jumlah lebih besar per transaksi.
+Displays customer shopping intensity by time period, covering total orders, number of active users, and average items per order. The Afternoon segment records 44 orders with 44 active users and an average of 10.59 items per order. Morning has 29 orders with an average of 10.66 items, Evening has 18 orders with an average of 8.44 items, and Night has only 9 orders but the highest average item count at 17.44, indicating that nighttime shoppers tend to buy in larger quantities per transaction.
 
 #### <u>D9. Department with the Most Loyal Customers (Line Chart)</u>
 
-Membandingkan jumlah total users dan rata-rata reorder rate per departemen untuk mengidentifikasi kategori dengan basis pelanggan paling loyal. Dari visualisasi ini, beberapa departemen menunjukkan reorder rate yang tinggi meski jumlah penggunanya tidak sebesar departemen utama. Pola yang terlihat menunjukkan bahwa loyalitas pelanggan tidak selalu berkorelasi langsung dengan popularitas departemen secara keseluruhan.
+Compares the total number of users and average reorder rate per department to identify categories with the most loyal customer base. Several departments show high reorder rates despite having fewer users than the major departments. The observed pattern suggests that customer loyalty does not always correlate directly with overall department popularity.
 
 #### <u>D10. Customer Retention by Interval Order (Donut Chart)</u>
 
-Mengklasifikasikan pola reorder pelanggan berdasarkan interval waktu antara dua order. Dari 95 data yang dianalisis, mayoritas pelanggan (61.1%) berbelanja secara mingguan (Weekly), diikuti Monthly sebesar 20.0%, dan Biweekly sebesar 18.9%. Temuan ini menunjukkan bahwa sebagian besar pelanggan memiliki siklus belanja mingguan yang konsisten, menjadikan strategi mingguan sebagai pendekatan yang paling relevan untuk kampanye retention.
+Classifies customer reorder patterns based on the time interval between two orders. Out of 95 data points analyzed, the majority of customers (61.1%) shop on a weekly basis (Weekly), followed by Monthly at 20.0%, and Biweekly at 18.9%. This finding shows that most customers have a consistent weekly shopping cycle, making weekly strategies the most relevant approach for retention campaigns.
 
 #### <u>D11. Market Basket Depth Analysis (Bar Chart)</u>
 
-Menganalisis kedalaman keranjang belanja berdasarkan tiga kategori: Large Basket, Medium Basket, dan Small Basket. Dari visualisasi ini, Large Basket menunjukkan total orders tertinggi namun dengan rata-rata item per order yang juga paling besar, mengindikasikan segmen pelanggan yang berbelanja dalam jumlah besar sekaligus. Medium Basket dan Small Basket memiliki total items yang lebih tinggi dibandingkan Large Basket, menunjukkan bahwa secara agregat, pembelian dengan keranjang menengah dan kecil lebih mendominasi dalam hal volume total item yang ditransaksikan.
+Analyzes shopping basket depth across three categories: Large Basket, Medium Basket, and Small Basket. The Large Basket segment shows the highest total orders but also the largest average items per order, indicating a customer segment that shops in large quantities at once. Medium Basket and Small Basket have higher total items than Large Basket in aggregate, showing that mid-sized and small basket purchases dominate in terms of total transaction volume overall.
 
 ---
 
 ## Insights
 
-Berikut insight utama yang diperoleh dari analisis pipeline ini:
+The following are the key insights derived from this pipeline analysis:
 
 ### Product Insights
 
-Kalau dilihat secara keseluruhan, performa produk ternyata tidak sesederhana "siapa yang paling banyak dibeli" atau "siapa yang punya reorder rate paling tinggi". Untuk mendapatkan gambaran yang lebih adil, kita perlu melihat kombinasi antara jumlah transaksi, tingkat pembelian ulang, keseimbangan performa, serta kategori departemennya.
+Looking at the overall picture, product performance is not as simple as "who gets bought the most" or "who has the highest reorder rate." To get a more complete view, we need to examine the combination of transaction volume, repurchase rate, performance balance, and department category.
 
-Dari berbagai analisis yang dilakukan, departemen produce terlihat paling konsisten dalam menjaga performanya. Produk-produk pada kategori ini tidak hanya sering dibeli, tetapi juga cukup berhasil membuat pelanggan kembali membeli produk yang sama. Meski begitu, beberapa kategori lain tetap menunjukkan karakteristik uniknya masing-masing, seperti produk yang kuat di pembelian awal namun lemah di reorder, atau sebaliknya memiliki loyalitas tinggi meskipun volume ordernya tidak terlalu besar.
+Across all analyses, the produce department consistently shows the strongest overall performance. Products in this category are not only bought frequently, but also succeed in bringing customers back to purchase the same items again. That said, other categories still exhibit their own unique characteristics — such as products that perform well on first purchase but are weak on reorder, or products with high loyalty despite modest order volumes.
 
 ### Time Insights
 
-- **Jam 10:00-14:00** adalah peak order hour, waktu ideal untuk push notifikasi & promosi flash sale
-- Segmen **Afternoon (12-17)** menyumbang porsi terbesar dari total daily orders
-- Order di jam **01:00-05:00 (Night)** sangat rendah, waktu ideal untuk maintenance pipeline tanpa gangguan
+- **10:00 AM – 2:00 PM** is the peak order window — the ideal time for push notifications and flash sale promotions.
+- The **Afternoon (12–17)** segment contributes the largest share of total daily orders.
+- Orders during **1:00 AM – 5:00 AM (Night)** are very low — the ideal window for pipeline maintenance without disruption.
 
 ### Department Insights
 
-- **Produce, Dairy Eggs, dan Snacks** secara konsisten berada di top 3 department
-- Analisis Pareto menunjukkan sekitar 5 department sudah mencakup lebih dari 70% dari total order
-- Department **bulk** dan **other** memiliki order paling rendah, kandidat untuk dikurangi slot display-nya
+- **Produce, Dairy Eggs, and Snacks** consistently rank in the top 3 departments.
+- Pareto analysis shows that approximately 5 departments already account for more than 70% of total orders.
+- The **bulk** and **other** departments have the lowest order counts, making them candidates for reduced display slot allocation.
 
 ### Day of Week Insights
 
-- **Sunday dan Monday** adalah hari dengan order tertinggi, orang belanja kebutuhan mingguan di awal minggu
-- Order cenderung turun di pertengahan minggu (Rabu-Kamis)
-- Weekend (Sabtu) kembali meningkat namun tidak setinggi Sunday
+- **Sunday and Monday** have the highest order volumes — customers shop for weekly necessities at the start of the week.
+- Orders tend to dip in the middle of the week (Wednesday–Thursday).
+- Saturday sees an increase again but does not reach Sunday's level.
 
 ### Reorder Insights
 
-- Overall reorder rate sekitar 59%, lebih dari separuh transaksi adalah repeat purchase, menandakan **customer retention yang kuat**
-- `days_since_prior_order` paling sering di angka **7** dan **30**, menunjukkan pola belanja mingguan dan bulanan yang konsisten
-- User dengan order_number tinggi (>10) cenderung memiliki reorder rate jauh di atas rata-rata
+- The overall reorder rate is approximately 59% — more than half of all transactions are repeat purchases, indicating **strong customer retention**.
+- `days_since_prior_order` is most commonly at **7** and **30**, showing consistent weekly and monthly shopping patterns.
+- Users with an order_number greater than 10 tend to have reorder rates well above average.
 
 ---
 
 ## End-to-End Running Guide
 
-Ikuti langkah berikut untuk menjalankan pipeline dari nol:
+Follow these steps to run the pipeline from scratch:
 
 ### Prerequisites
 
 ```bash
-# Pastikan sudah terinstall:
+# Make sure the following are installed:
 docker --version        # >= 24.x
 docker compose version  # >= 2.x
 python --version        # >= 3.11
@@ -885,23 +884,23 @@ cp .env.example .env
 ### Step 2 - Build & Start Containers
 
 ```bash
-# Build semua service
+# Build all services
 docker compose build
 
-# Jalankan semua container
+# Start all containers
 docker compose up -d
 
-# Cek status
+# Check status
 docker compose ps
 ```
 
-### Step 3 - Init Airflow
+### Step 3 - Initialize Airflow
 
 ```bash
-# Init database Airflow (hanya sekali)
+# Initialize Airflow database (only once)
 docker compose exec airflow-webserver airflow db init
 
-# Buat admin user
+# Create admin user
 docker compose exec airflow-webserver airflow users create \
     --username admin \
     --password admin \
@@ -911,42 +910,42 @@ docker compose exec airflow-webserver airflow users create \
     --email admin@example.com
 ```
 
-### Step 4 - Akses Services
+### Step 4 - Access Services
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
 | Airflow | http://localhost:8080 | admin / admin |
 | ClickHouse HTTP | http://localhost:8123 | admin / rahasia |
-| Metabase | http://localhost:3000 | setup saat pertama buka |
+| Metabase | http://localhost:3000 | Set up on first launch |
 
-### Step 5 - Trigger Pipeline
+### Step 5 - Trigger the Pipeline
 
 ```bash
 # Via CLI
 docker compose exec airflow-webserver \
     airflow dags trigger task2_orders_pipeline
 
-# Atau via Airflow UI -> DAGs -> task2_orders_pipeline -> Trigger
+# Or via Airflow UI -> DAGs -> task2_orders_pipeline -> Trigger
 ```
 
 ### Step 6 - Monitor
 
 ```bash
-# Lihat log task secara live
+# View task logs live
 docker compose exec airflow-webserver \
     airflow tasks logs task2_orders_pipeline process_orders_analytics <run_id>
 
-# Atau pantau di Airflow UI -> DAG Runs -> pilih run -> Task Logs
+# Or monitor in Airflow UI -> DAG Runs -> select run -> Task Logs
 ```
 
 ### Step 7 - Verify ClickHouse
 
 ```bash
-# Masuk ke ClickHouse client
+# Enter the ClickHouse client
 docker compose exec clickhouse-server clickhouse-client \
     --user admin --password rahasia
 
-# Cek data masuk
+# Check data ingestion
 SELECT count() FROM analytics.raw_orders;
 SELECT count() FROM analytics.product_analytics;
 SELECT count() FROM analytics.hourly_analytics;
@@ -955,30 +954,30 @@ SELECT count() FROM analytics.department_analytics;
 
 ### Step 8 - Setup Metabase
 
-1. Buka http://localhost:3000
-2. Pilih **Add a database** -> ClickHouse
-3. Isi koneksi:
+1. Open http://localhost:3000
+2. Select **Add a database** → ClickHouse
+3. Fill in the connection details:
    - Host: `clickhouse-server`
    - Port: `9000`
    - Database: `analytics`
    - User: `admin`
    - Password: `rahasia`
-4. Klik **Save** -> tunggu sync selesai
-5. Mulai buat dashboard dari query A1-D11
+4. Click **Save** → wait for sync to complete
+5. Start building your dashboard from queries A1–D11
 
 ### Troubleshooting
 
 ```bash
-# Restart service tertentu
+# Restart a specific service
 docker compose restart clickhouse-server
 
-# Lihat log container
+# View container logs
 docker compose logs -f airflow-scheduler
 
-# Reset pipeline (hapus parquet lama)
+# Reset the pipeline (delete old parquet files)
 rm -rf ./data_lake/task2/*.parquet
 
-# Masuk ke container Airflow untuk debug manual
+# Enter the Airflow container for manual debugging
 docker compose exec airflow-webserver bash
 python /opt/airflow/dags/scripts/process_task2_spark.py
 ```
@@ -987,16 +986,16 @@ python /opt/airflow/dags/scripts/process_task2_spark.py
 
 ## Closing
 
-Pipeline ini berhasil mengimplementasikan arsitektur **Big Data end-to-end** mulai dari ingestion, processing skala besar dengan Spark, warehousing di ClickHouse, hingga visualisasi interaktif di Metabase, semuanya diorkestrasikan otomatis oleh Apache Airflow.
+This pipeline successfully implements a **Big Data end-to-end** architecture, spanning ingestion, large-scale processing with Spark, warehousing in ClickHouse, and interactive visualization in Metabase — all automatically orchestrated by Apache Airflow.
 
-Beberapa hal yang bisa dikembangkan ke depannya:
+Potential future enhancements:
 
-- [ ] Tambah **streaming ingestion** menggunakan Kafka
-- [ ] Implementasi **data quality checks** (Great Expectations)
-- [ ] Tambah tabel **user_analytics** untuk cohort analysis
-- [ ] Integrasi **alerting** di Airflow jika pipeline gagal
-- [ ] **Partitioning** tabel ClickHouse berdasarkan tanggal untuk query yang lebih cepat
-- [ ] Tambah **ML model** untuk prediksi produk yang akan di-reorder
+- [ ] Add **streaming ingestion** using Kafka
+- [ ] Implement **data quality checks** (Great Expectations)
+- [ ] Add a **user_analytics** table for cohort analysis
+- [ ] Integrate **alerting** in Airflow when the pipeline fails
+- [ ] Apply ClickHouse table **partitioning** by date for faster queries
+- [ ] Add an **ML model** for predicting products likely to be reordered
 
 ---
 
@@ -1004,7 +1003,7 @@ Beberapa hal yang bisa dikembangkan ke depannya:
 
 **Institut Teknologi Sepuluh Nopember**
 <br>
-Departemen Informatika - 2024
+Department of Informatics - 2024
 <br><br>
 
 | | |
@@ -1014,9 +1013,9 @@ Departemen Informatika - 2024
 
 <br>
 
-## Pembagian Tugas
-1. Ibrahim Ferel : Menyusun script untuk fetch ke dataset, membuat script dan setup pipeline airflow, menyusun query dan dashboard metabase, menyusun dokumentasi readme
-2. Afarrel Febryan G. : membuat script dan setup pipeline airflow, meyusun query dan dashboard metabase, membantu ferel menyusun dokumentasi readme
+## Task Division
+1. Ibrahim Ferel: Wrote the API fetch script, built and set up the Airflow pipeline, composed Metabase queries and dashboard, wrote the README documentation.
+2. Afarrel Febryan G.: Built and set up the Airflow pipeline, composed Metabase queries and dashboard, assisted with README documentation.
 
 *Bismillah Admin Lab Manajemen Cerdas Informasi <3*
 
