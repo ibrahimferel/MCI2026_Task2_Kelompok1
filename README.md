@@ -733,6 +733,9 @@ Melalui chart ini, kita dapat melihat produk-produk yang cukup sering dibeli pad
 
 Menampilkan pola pemesanan sepanjang hari. Line chart B1 menunjukkan kurva order per jam, sementara Area chart B3 memperlihatkan akumulasi order secara kumulatif. Dashboard ini berguna untuk menentukan waktu terbaik untuk push notification, flash sale, atau restocking.
 
+![alt text](asset_documentation/image-11.png)
+![alt text](asset_documentation/image-12.png)
+
 #### B1. Distribution Orders per Hour (Pie Chart)
 
 Menampilkan distribusi proporsi order pada setiap jam dalam sehari. Berdasarkan hasil analisis, jam 15 (pukul 15.00) mencatat persentase tertinggi sebesar 12.41%, diikuti oleh jam 17 sebesar 12.31%, dan jam 9 sebesar 11.10%. Hal ini menunjukkan bahwa aktivitas pemesanan pelanggan paling terkonsentrasi pada rentang siang hingga sore hari, dengan total keseluruhan mencapai 1.072 transaksi.
@@ -754,6 +757,9 @@ Mengklasifikasikan setiap jam ke dalam dua kategori: Above Average dan Below Ave
 ### 3. Department Breakdown
 
 Menganalisis kontribusi setiap departemen terhadap total order. Pareto chart memperlihatkan department mana yang menyumbang porsi terbesar dari total transaksi, sangat berguna untuk keputusan alokasi stok dan budget promosi.
+
+![alt text](asset_documentation/image-13.png)
+![alt text](asset_documentation/image-14.png)
 
 #### C1. Department Contribution to Total Transactions (Donut Chart)
 
@@ -780,6 +786,10 @@ Menampilkan selisih (gap) jumlah order antara satu departemen dengan departemen 
 ### 4. Raw Transaction Summary
 
 Overview keseluruhan data transaksi termasuk jumlah order unik, user aktif, produk unik, distribusi per hari dalam seminggu, dan berbagai analisis perilaku pelanggan secara mendalam.
+
+![alt text](asset_documentation/image-15.png)
+![alt text](asset_documentation/image-16.png)
+![alt text](asset_documentation/image-17.png)
 
 #### D1. All Transaction Count (Scalar)
 
