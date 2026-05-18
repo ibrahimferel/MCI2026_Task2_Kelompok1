@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 def fetch_task2_orders():
-    print("📦 Mengambil data dari Orders API...")
+    print("Mengambil data dari Orders API...")
 
     url = "http://96.9.212.102:8000/orders"
 
@@ -55,15 +55,15 @@ def fetch_task2_orders():
 
         df.to_parquet(output_path, index=False)
 
-        print(f"✅ Berhasil menyimpan {len(df)} rows")
-        print(f"📁 File parquet:")
+        print(f"Berhasil menyimpan {len(df)} rows")
+        print(f"File parquet:")
         print(output_path)
 
         print("\nPreview Data:")
         print(df.head())
 
     except Exception as e:
-        print(f"❌ Gagal mengambil data: {e}")
+        print(f"Gagal mengambil data: {e}")
         raise
 
 
