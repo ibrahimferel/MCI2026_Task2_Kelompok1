@@ -1,14 +1,9 @@
--- ============================================================
--- ANALYTICS QUERIES — ClickHouse Warehouse
+-- ANALYTICS QUERIES - ClickHouse Warehouse
 -- Database: analytics
 -- Tables: raw_orders, product_analytics, hourly_analytics,
 --         department_analytics
--- ============================================================
 
--- ============================================================
--- A. PRODUCT ANALYTICS
--- ============================================================
-
+-- A. Product Analytics
 -- A1. Top 10 produk paling banyak dipesan 
 -- VISUALISASI: Row chart
 SELECT
@@ -151,57 +146,47 @@ ORDER BY new_buyer_orders DESC
 LIMIT 5;
 
 
--- ============================================================
--- B. HOURLY ANALYTICS
--- ============================================================
-
--- B1. Distribusi order per jam (full day)
+-- B. Hourly Analytics
+-- B1. Distribusi Order per Hour
 SELECT
     order_hour_of_day,
     total_orders,
-    round(total_orders * 100.0 / sum(total_orders) OVER (), 2) AS pct_of_day
+    round(
+        total_orders * 100.0 / sum(total_orders) OVER (),
+        2
+    ) AS pct_of_day
 FROM analytics.hourly_analytics
 ORDER BY order_hour_of_day;
 
--- B2. Peak hour — jam tersibuk
-SELECT
-    order_hour_of_day,
-    total_orders
-FROM analytics.hourly_analytics
-ORDER BY total_orders DESC
-LIMIT 5;
-
--- B3. Off-peak hours — jam paling sepi
-SELECT
-    order_hour_of_day,
-    total_orders
-FROM analytics.hourly_analytics
-ORDER BY total_orders ASC
-LIMIT 5;
-
--- B4. Segmentasi waktu (Morning / Afternoon / Evening / Night)
+-- B2. Time Segmentation (Morning / Afternoon / Evening / Night)
 SELECT
     CASE
-        WHEN order_hour_of_day BETWEEN 5  AND 11 THEN 'Morning (05-11)'
-        WHEN order_hour_of_day BETWEEN 12 AND 17 THEN 'Afternoon (12-17)'
-        WHEN order_hour_of_day BETWEEN 18 AND 21 THEN 'Evening (18-21)'
+        WHEN order_hour_of_day BETWEEN 5 AND 11  THEN 'Morning (05-11)'
+        WHEN order_hour_of_day BETWEEN 12 AND 17  THEN 'Afternoon (12-17)'
+        WHEN order_hour_of_day BETWEEN 18 AND 21  THEN 'Evening (18-21)'
         ELSE 'Night (22-04)'
     END AS time_segment,
-    sum(total_orders)  AS total_orders,
-    round(sum(total_orders) * 100.0 / sum(sum(total_orders)) OVER (), 2) AS pct
+    sum(total_orders) AS total_orders,
+    round(
+        sum(total_orders) * 100.0 / sum(sum(total_orders)) OVER (),
+        2
+    ) AS pct
 FROM analytics.hourly_analytics
-GROUP BY time_segment
+GROUP BY
+    time_segment
 ORDER BY total_orders DESC;
 
--- B5. Running total order sepanjang hari
+-- B3. Running total order through the day
 SELECT
     order_hour_of_day,
     total_orders,
-    sum(total_orders) OVER (ORDER BY order_hour_of_day) AS cumulative_orders
+    sum(total_orders) OVER (
+        ORDER BY order_hour_of_day
+    ) AS cumulative_orders
 FROM analytics.hourly_analytics
 ORDER BY order_hour_of_day;
 
--- B6. Perbandingan jam vs rata-rata harian (above/below average)
+-- B4. Hourly order performance vs daily average
 SELECT
     order_hour_of_day,
     total_orders,
@@ -213,100 +198,110 @@ SELECT
 FROM analytics.hourly_analytics
 ORDER BY order_hour_of_day;
 
--- B7. Top 3 jam per segmen waktu
+-- C. Department Analytics
+-- C1. Department contribution to total transactions
 SELECT
-    time_segment,
-    order_hour_of_day,
+    department,
     total_orders,
-    rank_in_segment
-FROM (
-    SELECT
-        order_hour_of_day,
-        total_orders,
+    round(
+        total_orders * 100.0 / sum(total_orders) OVER (),
+        2
+    ) AS market_share_pct
+FROM analytics.department_analytics
+ORDER BY total_orders DESC;
+
+-- C2. Concentration Risk Analysis
+SELECT
+    COUNT(*) AS total_departments,
+    SUM(
         CASE
-            WHEN order_hour_of_day BETWEEN 5  AND 11 THEN 'Morning'
-            WHEN order_hour_of_day BETWEEN 12 AND 17 THEN 'Afternoon'
-            WHEN order_hour_of_day BETWEEN 18 AND 21 THEN 'Evening'
-            ELSE 'Night'
-        END AS time_segment,
-        rank() OVER (
-            PARTITION BY CASE
-                WHEN order_hour_of_day BETWEEN 5  AND 11 THEN 'Morning'
-                WHEN order_hour_of_day BETWEEN 12 AND 17 THEN 'Afternoon'
-                WHEN order_hour_of_day BETWEEN 18 AND 21 THEN 'Evening'
-                ELSE 'Night'
+            WHEN total_orders >= 50 THEN 1
+            ELSE 0
+        END
+    ) AS major_departments,
+    ROUND(
+        SUM(
+            CASE
+                WHEN total_orders >= 50 THEN total_orders
+                ELSE 0
             END
-            ORDER BY total_orders DESC
-        ) AS rank_in_segment
-    FROM analytics.hourly_analytics
-)
-WHERE rank_in_segment <= 3
-ORDER BY time_segment, rank_in_segment;
+        ) * 100.0 / SUM(total_orders),
+        2
+    ) AS pct_orders_from_major_departments
+FROM analytics.department_analytics;
 
-
--- ============================================================
--- C. DEPARTMENT ANALYTICS
--- ============================================================
-
--- C1. Ranking department berdasarkan total order
+-- C3. Anomaly Detection (Z-Score)
+WITH
+    stats AS (
+        SELECT AVG(total_orders) AS avg_orders, STDDEV_POP(total_orders) AS std_orders
+        FROM analytics.department_analytics
+    )
 SELECT
-    department,
-    total_orders,
-    round(total_orders * 100.0 / sum(total_orders) OVER (), 2) AS market_share_pct
-FROM analytics.department_analytics
-ORDER BY total_orders DESC;
-
--- C2. Top 5 department
-SELECT
-    department,
-    total_orders
-FROM analytics.department_analytics
-ORDER BY total_orders DESC
-LIMIT 5;
-
--- C3. Department terbawah (least popular)
-SELECT
-    department,
-    total_orders
-FROM analytics.department_analytics
-ORDER BY total_orders ASC
-LIMIT 5;
-
--- C4. Kumulatif market share (sampai 80% = Pareto)
-SELECT
-    department,
-    total_orders,
-    round(sum(total_orders) OVER (ORDER BY total_orders DESC) * 100.0
-          / sum(total_orders) OVER (), 2) AS cumulative_pct
-FROM analytics.department_analytics
-ORDER BY total_orders DESC;
-
--- C5. Department di atas dan di bawah rata-rata
-SELECT
-    department,
-    total_orders,
-    round(avg(total_orders) OVER (), 2) AS avg_orders,
+    d.department,
+    d.total_orders,
+    ROUND(
+        (d.total_orders - s.avg_orders) / NULLIF(s.std_orders, 0),
+        2
+    ) AS z_score,
     CASE
-        WHEN total_orders > avg(total_orders) OVER () THEN 'Above Average'
+        WHEN ABS(
+            (d.total_orders - s.avg_orders) / NULLIF(s.std_orders, 0)
+        ) >= 2 THEN 'Anomaly'
+        ELSE 'Normal'
+    END AS anomaly_status
+FROM analytics.department_analytics d
+    CROSS JOIN stats s
+ORDER BY z_score DESC;
+
+-- C4. Department with total orders above and below average
+SELECT
+    department,
+    total_orders,
+    ROUND(avg_orders, 2) AS avg_orders,
+    CASE
+        WHEN total_orders > avg_orders THEN 'Above Average'
         ELSE 'Below Average'
     END AS performance
+FROM (
+        SELECT
+            department, total_orders, AVG(total_orders) OVER () AS avg_orders
+        FROM analytics.department_analytics
+    )
+ORDER BY total_orders DESC;
+
+-- C5. Total Orders Gap to next department
+SELECT
+    department,
+    total_orders,
+    RANK() OVER (
+        ORDER BY total_orders DESC
+    ) AS dept_rank,
+    total_orders - LEAD(total_orders) OVER (
+        ORDER BY total_orders DESC
+    ) AS gap_to_next
 FROM analytics.department_analytics
 ORDER BY total_orders DESC;
 
-
--- ============================================================
--- D. RAW ORDERS — Transactional Deep Dive
--- ============================================================
-
--- D1. Total keseluruhan transaksi
+-- D. Raw Orders
+-- D1. All transactions
 SELECT
-    count(*)                    AS total_rows,
-    count(DISTINCT order_id)    AS unique_orders,
-    count(DISTINCT user_id)     AS unique_users,
-    count(DISTINCT product_id)  AS unique_products
+    count(*) AS total_rows,
+    count(DISTINCT order_id) AS unique_orders,
+    count(DISTINCT user_id) AS unique_users,
+    count(DISTINCT product_id) AS unique_products
 FROM analytics.raw_orders;
 
--- D2. Distribusi order per hari dalam seminggu
+-- D2. Average item per order
+SELECT
+    round(
+        count(*) / count(DISTINCT order_id),
+        2
+    ) AS avg_items_per_order,
+    max(add_to_cart_order) AS max_items_in_one_order,
+    min(add_to_cart_order) AS min_items_in_one_order
+FROM analytics.raw_orders;
+
+-- D3. Order distribution per day in a week
 SELECT
     order_dow,
     CASE order_dow
@@ -320,79 +315,153 @@ SELECT
     END AS day_name,
     count(*) AS total_orders
 FROM analytics.raw_orders
-GROUP BY order_dow
+GROUP BY
+    order_dow
 ORDER BY order_dow;
 
--- D3. User paling aktif (top 10 by order count)
+-- D4. Top 10 most active user by order count
 SELECT
     user_id,
-    count(DISTINCT order_id)    AS total_orders,
-    count(*)                    AS total_items,
-    round(avg(days_since_prior_order), 1) AS avg_days_between_orders
+    count(DISTINCT order_id) AS total_orders,
+    count(*) AS total_items,
+    round(
+        avg(days_since_prior_order),
+        1
+    ) AS avg_days_between_orders
 FROM analytics.raw_orders
-GROUP BY user_id
+GROUP BY
+    user_id
 ORDER BY total_orders DESC
 LIMIT 10;
 
--- D4. Rata-rata item per order
-SELECT
-    round(count(*) / count(DISTINCT order_id), 2) AS avg_items_per_order,
-    max(add_to_cart_order)                         AS max_items_in_one_order,
-    min(add_to_cart_order)                         AS min_items_in_one_order
-FROM analytics.raw_orders;
-
--- D5. Reorder rate keseluruhan dari raw data
-SELECT
-    count(*)                                              AS total_items,
-    sum(reordered)                                        AS reordered_items,
-    round(sum(reordered) * 100.0 / count(*), 2)           AS reorder_rate_pct
-FROM analytics.raw_orders;
-
--- D6. Pola order per jam dari raw data (cross-check dengan hourly_analytics)
-SELECT
-    order_hour_of_day,
-    count(DISTINCT order_id) AS unique_orders,
-    count(*)                 AS total_items
-FROM analytics.raw_orders
-GROUP BY order_hour_of_day
-ORDER BY order_hour_of_day;
-
--- D7. Department popularity dari raw data (cross-check dengan department_analytics)
+-- D5. Product reorder rate distribution
 SELECT
     department,
-    count(DISTINCT order_id) AS unique_orders,
-    count(*)                 AS total_items,
-    round(avg(reordered), 4) AS reorder_rate
+    COUNT(*) AS total_items,
+    SUM(reordered) AS reordered_items,
+    ROUND(
+        SUM(reordered) * 100.0 / COUNT(*),
+        2
+    ) AS reorder_rate_pct
 FROM analytics.raw_orders
-GROUP BY department
-ORDER BY unique_orders DESC;
+GROUP BY
+    department
+ORDER BY reorder_rate_pct DESC;
 
--- D8. Distribusi days_since_prior_order (seberapa sering user kembali)
-SELECT
-    days_since_prior_order,
-    count(*) AS frequency
-FROM analytics.raw_orders
-WHERE days_since_prior_order IS NOT NULL
-GROUP BY days_since_prior_order
-ORDER BY days_since_prior_order;
-
--- D9. Aisle terpopuler
+-- D6. Top 10 most popular Aisle
 SELECT
     aisle,
     department,
     count(DISTINCT order_id) AS unique_orders,
-    count(*)                 AS total_items
+    count(*) AS total_items
 FROM analytics.raw_orders
-GROUP BY aisle, department
+GROUP BY
+    aisle,
+    department
 ORDER BY unique_orders DESC
-LIMIT 15;
+LIMIT 10;
 
--- D10. Kombinasi DOW + hour dengan order terbanyak (heatmap data)
+-- D7. The most consistent user reorder
 SELECT
-    order_dow,
-    order_hour_of_day,
-    count(DISTINCT order_id) AS unique_orders
+    user_id,
+    COUNT(*) AS total_items,
+    ROUND(AVG(reordered) * 100, 2) AS reorder_rate_pct,
+    COUNT(DISTINCT product_id) AS unique_products
 FROM analytics.raw_orders
-GROUP BY order_dow, order_hour_of_day
-ORDER BY unique_orders DESC
+GROUP BY
+    user_id
+HAVING
+    COUNT(*) >= 50
+ORDER BY reorder_rate_pct DESC, total_items DESC
 LIMIT 20;
+
+-- D8. Department contribution to total transaction
+SELECT
+    department,
+    COUNT(*) AS total_items,
+    ROUND(
+        COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (),
+        2
+    ) AS contribution_pct
+FROM analytics.raw_orders
+GROUP BY
+    department
+ORDER BY contribution_pct DESC;
+
+-- D9. Customer shopping intensity by time
+SELECT
+    CASE
+        WHEN order_hour_of_day BETWEEN 6 AND 10  THEN 'Morning'
+        WHEN order_hour_of_day BETWEEN 11 AND 15  THEN 'Afternoon'
+        WHEN order_hour_of_day BETWEEN 16 AND 20  THEN 'Evening'
+        ELSE 'Night'
+    END AS shopping_period,
+    COUNT(DISTINCT order_id) AS total_orders,
+    COUNT(DISTINCT user_id) AS active_users,
+    ROUND(
+        COUNT(*) * 1.0 / COUNT(DISTINCT order_id),
+        2
+    ) AS avg_items_per_order
+FROM analytics.raw_orders
+GROUP BY
+    shopping_period
+ORDER BY total_orders DESC;
+
+-- D10. Department with the most loyal customer
+WITH
+    department_users AS (
+        SELECT
+            department,
+            user_id,
+            COUNT(DISTINCT order_id) AS total_orders,
+            AVG(reordered) AS reorder_rate
+        FROM analytics.raw_orders
+        GROUP BY
+            department,
+            user_id
+    )
+SELECT
+    department,
+    ROUND(AVG(total_orders), 2) AS avg_orders_per_user,
+    ROUND(AVG(reorder_rate) * 100, 2) AS avg_reorder_rate_pct,
+    COUNT(DISTINCT user_id) AS total_users
+FROM department_users
+GROUP BY
+    department
+ORDER BY avg_orders_per_user DESC;
+
+-- D11. Customer retention by interval order
+SELECT
+    CASE
+        WHEN days_since_prior_order <= 7 THEN 'Weekly'
+        WHEN days_since_prior_order <= 14 THEN 'Biweekly'
+        WHEN days_since_prior_order <= 30 THEN 'Monthly'
+        ELSE 'Inactive'
+    END AS retention_group,
+    COUNT(DISTINCT user_id) AS total_users,
+    COUNT(DISTINCT order_id) AS total_orders,
+    ROUND(AVG(reordered) * 100, 2) AS reorder_rate_pct
+FROM analytics.raw_orders
+WHERE
+    days_since_prior_order IS NOT NULL
+GROUP BY
+    retention_group
+ORDER BY total_users DESC;
+
+-- D12. Market basket depth analysis
+SELECT
+    CASE
+        WHEN add_to_cart_order <= 5 THEN 'Small Basket'
+        WHEN add_to_cart_order <= 15 THEN 'Medium Basket'
+        ELSE 'Large Basket'
+    END AS basket_depth,
+    COUNT(DISTINCT order_id) AS total_orders,
+    COUNT(*) AS total_items,
+    ROUND(
+        COUNT(*) * 1.0 / COUNT(DISTINCT order_id),
+        2
+    ) AS avg_items_per_order
+FROM analytics.raw_orders
+GROUP BY
+    basket_depth
+ORDER BY avg_items_per_order DESC;

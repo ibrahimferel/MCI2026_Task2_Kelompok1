@@ -1,6 +1,6 @@
 <div align="center">
 
-### Grocery Orders Analytics Dashboard - Pipeline Detailing Explanation
+# Grocery Orders Analytics Dashboard - Pipeline Detailing Explanation
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Spark](https://img.shields.io/badge/Apache_Spark-3.x-E25A1C?style=flat-square&logo=apachespark&logoColor=white)
@@ -13,7 +13,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Kelompok 1](#-team)
 2. [Pipeline Architecture](#️-pipeline-architecture)
