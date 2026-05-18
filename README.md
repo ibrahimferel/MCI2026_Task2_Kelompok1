@@ -34,7 +34,7 @@
 
 <table align="center">
     <p align="center">
-      <img src="task2/asset_documentation/farel-ferel.gif" width="800"/>
+      <img src="task2/asset_documentation/IMG_1354.MOV" width="800"/>
     </p>
     <td align="center" width="320">
       <b>Ibrahim Ferel</b>
