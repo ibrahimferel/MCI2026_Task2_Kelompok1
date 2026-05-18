@@ -577,20 +577,6 @@ RUN pip install --no-cache-dir \
 
 Pipeline berjalan terjadwal setiap jam via Airflow DAG `task2_orders_pipeline`.
 
-```
-[2026-05-15, 09:06:23 UTC] INFO - Membaca seluruh aliran data dari Data Lake...
-[2026-05-15, 09:06:23 UTC] INFO - Menghitung analytics produk & reorder rate...
-[2026-05-15, 09:06:23 UTC] INFO - Menghitung analytics per jam pemesanan...
-[2026-05-15, 09:06:23 UTC] INFO - Menghitung analytics per departemen...
-[2026-05-15, 09:06:23 UTC] INFO - Memuat ke ClickHouse Warehouse...
-[2026-05-15, 09:06:23 UTC] INFO - Menyimpan raw data ke analytics.raw_orders...
-[2026-05-15, 09:06:23 UTC] INFO - Done: Inserted XXXX rows ke analytics.raw_orders
-[2026-05-15, 09:06:23 UTC] INFO - Done: Inserted XXXX rows ke analytics.product_analytics
-[2026-05-15, 09:06:23 UTC] INFO - Done: Inserted 24 rows ke analytics.hourly_analytics
-[2026-05-15, 09:06:23 UTC] INFO - Done: Inserted 21 rows ke analytics.department_analytics
-[2026-05-15, 09:06:23 UTC] INFO - Pipeline Selesai!
-```
-
 ![alt text](asset_documentation/image-5.png)
 ![alt text](asset_documentation/image-6.png)
 
