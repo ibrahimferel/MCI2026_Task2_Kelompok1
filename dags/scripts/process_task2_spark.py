@@ -12,7 +12,7 @@ def run_spark_analytics():
         .getOrCreate()
 
     print("Membaca seluruh aliran data dari Data Lake...")
-    # Spark dengan mudah membaca SEMUA file parquet di folder ini sekaligus
+    # Spark dengan mudah membaca seluruh file parquet di folder ini sekaligus
     df_raw = spark.read.parquet("file:///opt/airflow/data_lake/task2/")
     # df_raw = spark.read.parquet("data_lake/task2/")
     df_raw.cache()
