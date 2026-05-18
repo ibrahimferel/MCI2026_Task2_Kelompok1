@@ -588,18 +588,6 @@ FROM system.parts
 WHERE database = 'analytics' AND active
 GROUP BY table;
 ```
-
-```
-|--------------------------|--------------|
-| table                    | total_rows   |
-|--------------------------|--------------|
-| raw_orders               | 21           |
-| product_analytics        | 912          |
-| hourly_analytics         | 736          |
-| department_analytics     | 20           |
-|--------------------------|--------------|
-```
-
 ![alt text](asset_documentation/image-7.png)
 
 ---
